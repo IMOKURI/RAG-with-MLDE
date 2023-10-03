@@ -1,0 +1,30 @@
+name: rag-system
+workspace: rag-system
+project: embedding
+environment:
+  # environment_variables:
+  #   - NCCL_DEBUG=INFO
+  image:
+    gpu: rag-system:latest
+  force_pull_image: false
+bind_mounts:
+  - host_path: /home/sugi/work/rag-system
+    container_path: rag-system
+  - host_path: /home/sugi/.cache
+    container_path: /root/.cache
+resources:
+  slots_per_trial: 1
+  shm_size: 274877906944
+max_restarts: 0
+profiling:
+  enabled: true
+  begin_on_batch: 0
+  end_after_batch: null
+  sync_timings: false
+searcher:
+  name: single
+  max_length: 100
+  metric: x
+entrypoint: >-
+  python -m determined.launch.torch_distributed
+  python embedding_generation.py
