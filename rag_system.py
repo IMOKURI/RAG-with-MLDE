@@ -67,26 +67,33 @@ def embedding(input_text: str) -> np.ndarray:
     return output
 
 
-def search_index(embedded_text: np.ndarray):
+def search_index(embedded_text: np.ndarray) -> str:
     distances, indices = index.search(embedded_text, k=1)
 
     cursor.execute("SELECT document FROM documents WHERE id = ?", indices[0])
-
     document = cursor.fetchone()
+
+    st.write("Reference document")
     st.info(document[0])
+
+    return document[0]
 
 
 def generate_response(input_text: str):
     llm = OpenAI(openai_api_key=openai_api_key, openai_api_base=openai_api_base, model="vicuna-13b-v1.5", batch_size=1)
+
+    st.write("LLM Response")
     st.info(llm(input_text))
 
 
 with st.form("my_form"):
-    text = st.text_area("Enter text:", "What are the three key pieces of advice for learning how to code?")
+    text = st.text_area("Enter text:", "最近、人気のゲームを教えてください。")
     submitted = st.form_submit_button("Submit")
 
     if submitted:
         embedded_text = embedding(text)
-        search_index(embedded_text)
+        document = search_index(embedded_text)
 
-        # generate_response(text)
+        prompt = f"### Context:\n{document}\n\n### Human:\n{text}\n\n### Assistant:\n"
+
+        generate_response(prompt)
