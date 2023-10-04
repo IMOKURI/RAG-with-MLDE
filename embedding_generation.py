@@ -118,7 +118,7 @@ class EmbeddingProcessor(experimental.TorchBatchProcessor):
                 file_path = pathlib.Path(self.output_dir, file)
                 batches = torch.load(file_path, map_location="cuda:0")
                 for batch in batches:
-                    embeddings.append(batch["embeddings"].cpu().numpy())
+                    embeddings.append(batch["embeddings"].cpu().detach().numpy())
                     ids += batch["id"]
                     documents += batch["text"]
 
