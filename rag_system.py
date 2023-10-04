@@ -7,7 +7,7 @@ import openai
 import streamlit as st
 import torch
 from langchain.llms import OpenAI
-from transformers import BertModel, BertTokenizer
+from transformers import AutoModel, AutoTokenizer
 
 ################################################################################
 # Initialize StreamLit
@@ -44,8 +44,8 @@ cursor = conn.cursor()
 ################################################################################
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
-tokenizer = BertTokenizer.from_pretrained("bert-base-uncased")
-model = BertModel.from_pretrained("bert-base-uncased", output_hidden_states=True)
+tokenizer = AutoTokenizer.from_pretrained("studio-ousia/luke-japanese-large")
+model = AutoModel.from_pretrained("studio-ousia/luke-japanese-large", output_hidden_states=True)
 model = model.to(device)
 model.eval()
 
@@ -73,7 +73,7 @@ def search_index(embedded_text: np.ndarray) -> str:
     cursor.execute("SELECT document FROM documents WHERE id = ?", indices[0])
     document = cursor.fetchone()
 
-    st.write("Reference document")
+    st.write("Reference Document")
     st.info(document[0])
 
     return document[0]
@@ -87,7 +87,7 @@ def generate_response(input_text: str):
 
 
 with st.form("my_form"):
-    text = st.text_area("Enter text:", "最近、人気のゲームを教えてください。")
+    text = st.text_area("Enter text:", "ツイッターが最近行った調査について教えてください。")
     submitted = st.form_submit_button("Submit")
 
     if submitted:

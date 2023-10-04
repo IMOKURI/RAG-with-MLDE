@@ -9,13 +9,13 @@ import numpy as np
 import torch
 from datasets import load_dataset
 from determined.pytorch import experimental
-from transformers import BertModel, BertTokenizer
+from transformers import AutoModel, AutoTokenizer
 
 
 class EmbeddingProcessor(experimental.TorchBatchProcessor):
     def __init__(self, context):
-        self.tokenizer = BertTokenizer.from_pretrained("bert-base-uncased")
-        self.model = BertModel.from_pretrained("bert-base-uncased", output_hidden_states=True)
+        self.tokenizer = AutoTokenizer.from_pretrained("studio-ousia/luke-japanese-large")
+        self.model = AutoModel.from_pretrained("studio-ousia/luke-japanese-large", output_hidden_states=True)
 
         self.device = context.device
 
@@ -149,7 +149,7 @@ if __name__ == "__main__":
     dataset = load_dataset("llm-book/livedoor-news-corpus", split="train")
     # Persisting embeddings can take quite a while on Chroma
     # Adding a limit on dataset size to ensure the example finishes sooner
-    dataset = dataset.select(list(range(100)))
+    # dataset = dataset.select(list(range(100)))
     experimental.torch_batch_process(
         EmbeddingProcessor,
         dataset,
