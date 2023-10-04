@@ -3,7 +3,8 @@ LLM RAG System with MLDE
 
 ## Prerequisite
 
-- Start determined cluster
+- Start determined cluster.
+- Create python virtual env and install requirements.
 
 ## How to Run
 
@@ -11,7 +12,7 @@ LLM RAG System with MLDE
 
 ``` bash
 make build
-make run
+make batch-inference
 ```
 
 ### Start LLM

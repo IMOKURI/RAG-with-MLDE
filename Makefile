@@ -17,7 +17,7 @@ fastchat-controller: ## Start FastChat API Server Controller.
 	python3 -m fastchat.serve.controller
 
 fastchat-model-worker: ## Start FastChat API Server Model Worker.
-	python3 -m fastchat.serve.model_worker --model-path lmsys/vicuna-7b-v1.5
+	python3 -m fastchat.serve.model_worker --model-path lmsys/vicuna-13b-v1.5
 
 fastchat-api-server: ## Start FastChat API Server
 	python3 -m fastchat.serve.openai_api_server --host localhost --port 8000
