@@ -1,6 +1,8 @@
 # RAG-with-MLDE
 LLM RAG System with MLDE
 
+![RAG System](./images/RAG-System.drawio.png)
+
 ## Prerequisite
 
 - Start determined cluster.
