@@ -1,5 +1,7 @@
+import math
 import os
 import sqlite3
+import time
 
 import faiss
 import numpy as np
@@ -17,7 +19,8 @@ st.set_page_config(page_title="😏 Quickstart App")
 st.title("😏 Quickstart App")
 st.write("Hello world!")
 
-openai_api_key = st.sidebar.text_input("OpenAI API Key", type="password")
+# openai_api_key = st.sidebar.text_input("OpenAI API Key", type="password")
+openai_api_key = "dummy"
 openai_api_base = "http://localhost:8000/v1"
 
 openai.api_key = openai_api_key
@@ -80,10 +83,24 @@ def search_index(embedded_text: np.ndarray) -> str:
 
 
 def generate_response(input_text: str):
-    llm = OpenAI(openai_api_key=openai_api_key, openai_api_base=openai_api_base, model="vicuna-13b-v1.5", batch_size=1)
+    model = "vicuna-13b-v1.5"
+    # model = "Xwin-LM-70B-V0.1"
+    llm = OpenAI(openai_api_key=openai_api_key, openai_api_base=openai_api_base, model=model, batch_size=1)
 
     st.write("LLM Response")
     st.info(llm(input_text))
+
+
+def as_minutes(s):
+    m = math.floor(s / 60)
+    s -= m * 60
+    return "%dm %ds" % (m, s)
+
+
+def time_since(since):
+    now = time.time()
+    s = now - since
+    return f"Run time: {as_minutes(s)}"
 
 
 with st.form("my_form"):
@@ -91,9 +108,12 @@ with st.form("my_form"):
     submitted = st.form_submit_button("Submit")
 
     if submitted:
+        start = time.time()
         embedded_text = embedding(text)
         document = search_index(embedded_text)
 
         prompt = f"### Context:\n{document}\n\n### Human:\n{text}\n\n### Assistant:\n"
 
         generate_response(prompt)
+
+        st.write(time_since(start))

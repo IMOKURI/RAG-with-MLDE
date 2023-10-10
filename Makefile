@@ -18,6 +18,7 @@ fastchat-controller: ## Start FastChat API Server Controller.
 
 fastchat-model-worker: ## Start FastChat API Server Model Worker.
 	python3 -m fastchat.serve.model_worker --model-path lmsys/vicuna-13b-v1.5
+	# python3 -m fastchat.serve.model_worker --model-path Xwin-LM/Xwin-LM-70B-V0.1 --load-8bit
 
 fastchat-api-server: ## Start FastChat API Server
 	python3 -m fastchat.serve.openai_api_server --host localhost --port 8000
@@ -25,6 +26,10 @@ fastchat-api-server: ## Start FastChat API Server
 
 rag-app: ## Run RAG-System app.
 	streamlit run rag_system.py
+
+
+chat: ## Interactive chat interface
+	python3 -m fastchat.serve.cli --model-path Xwin-LM/Xwin-LM-70B-V0.1 --load-8bit
 
 
 help: ## Show this help
