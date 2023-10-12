@@ -6,30 +6,36 @@ IMAGE_TAG = latest
 
 
 build: ## Build container image.
-	docker build -t rag-system:$(IMAGE_TAG) .
+	docker build --build-arg PROXY=$(http_proxy) -t localhost:32000/determined:$(IMAGE_TAG) -f Dockerfile.determined .
+	docker build --build-arg PROXY=$(http_proxy) -t fastchat:$(IMAGE_TAG) -f Dockerfile.fastchat .
+	docker build --build-arg PROXY=$(http_proxy) -t streamlit:$(IMAGE_TAG) -f Dockerfile.streamlit .
+
+push: ## Push container image to registry.
+	docker push localhost:32000/determined:$(IMAGE_TAG)
 
 
 batch-inference: ## Run batch inference.
 	det experiment create ./determined_config.yaml .
 
 
-fastchat-controller: ## Start FastChat API Server Controller.
-	python3 -m fastchat.serve.controller
-
-fastchat-model-worker: ## Start FastChat API Server Model Worker.
-	python3 -m fastchat.serve.model_worker --model-path lmsys/vicuna-13b-v1.5
-	# python3 -m fastchat.serve.model_worker --model-path Xwin-LM/Xwin-LM-70B-V0.1 --load-8bit
-
-fastchat-api-server: ## Start FastChat API Server
-	python3 -m fastchat.serve.openai_api_server --host localhost --port 8000
+fastchat: ## Start FastChat API Server.
+	docker compose up -d
 
 
 rag-app: ## Run RAG-System app.
-	streamlit run rag_system.py
+	docker run -d --rm --name rag-system -p 8501:8501 \
+		--gpus '"device=6,7"' --shm-size=32g \
+		--net rag-with-mlde_default \
+		-e no_proxy="fastchat-controller,fastchat-model-worker,fastchat-api-server,localhost,127.0.0.1,ponkots01,16.171.32.68,10.0.0.0/8,192.168.0.0/16,172.16.0.0/16" \
+		-v /data/home/sugiyama/.cache:/root/.cache \
+		-v /data/home/sugiyama/rag-system:/app/rag-system \
+		streamlit:$(IMAGE_TAG) \
+		streamlit run rag_system.py
 
 
-chat: ## Interactive chat interface
-	python3 -m fastchat.serve.cli --model-path Xwin-LM/Xwin-LM-70B-V0.1 --load-8bit
+down: ## Stop containers.
+	docker stop rag-system
+	docker compose down
 
 
 help: ## Show this help

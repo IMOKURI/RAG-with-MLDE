@@ -1,4 +1,0 @@
-fschat
-langchain
-openai
-streamlit

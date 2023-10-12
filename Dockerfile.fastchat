@@ -1,0 +1,8 @@
+FROM huggingface/transformers-pytorch-deepspeed-latest-gpu:latest
+
+ARG PROXY
+
+ENV http_proxy=$PROXY \
+    https_proxy=$PROXY
+
+RUN pip install fschat[model_worker]

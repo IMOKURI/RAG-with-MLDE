@@ -1,28 +1,37 @@
-# RAG-with-MLDE
+# LLM-RAG-with-MLDE
+
 LLM RAG System with MLDE
+
+## Architecture
 
 ![RAG System](./images/RAG-System.drawio.png)
 
+## Showcase
+
+![Screenshot](./images/showcase.png)
+
 ## Prerequisite
 
-- Start determined cluster.
-- Create python virtual env and install requirements.
+- determined cluster (>= 0.26)
 
 ## How to Run
+
+### Build container images
+
+``` bash
+make build
+```
 
 ### Create Embedding DB
 
 ``` bash
-make build
 make batch-inference
 ```
 
 ### Start LLM
 
 ``` bash
-make fastchat-controller
-make fastchat-model-worker
-make fastchat-api-server
+make fastchat
 ```
 
 ### Start RAG System

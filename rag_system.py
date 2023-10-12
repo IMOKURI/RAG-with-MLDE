@@ -21,7 +21,7 @@ st.write("Hello world!")
 
 # openai_api_key = st.sidebar.text_input("OpenAI API Key", type="password")
 openai_api_key = "dummy"
-openai_api_base = "http://localhost:8000/v1"
+openai_api_base = "http://fastchat-api-server:8000/v1"
 
 openai.api_key = openai_api_key
 openai.api_base = openai_api_base
@@ -32,7 +32,7 @@ openai.api_base = openai_api_base
 ################################################################################
 # Initialize Index DB
 ################################################################################
-db_dir = "/home/sugi/work/rag-system/db"
+db_dir = "/app/rag-system/db"
 embedding_db_path = os.path.join(db_dir, "embedding.index")
 document_db_path = os.path.join(db_dir, "document.db")
 
@@ -84,7 +84,6 @@ def search_index(embedded_text: np.ndarray) -> str:
 
 def generate_response(input_text: str):
     model = "vicuna-13b-v1.5"
-    # model = "Xwin-LM-70B-V0.1"
     llm = OpenAI(openai_api_key=openai_api_key, openai_api_base=openai_api_base, model=model, batch_size=1)
 
     st.write("LLM Response")

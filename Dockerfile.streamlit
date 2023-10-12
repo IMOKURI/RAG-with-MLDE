@@ -1,0 +1,17 @@
+FROM huggingface/transformers-pytorch-deepspeed-latest-gpu:latest
+
+ARG PROXY
+
+ENV http_proxy=$PROXY \
+    https_proxy=$PROXY
+
+RUN pip install --no-cache -U \
+    faiss-gpu \
+    langchain \
+    openai \
+    streamlit
+
+ADD ./rag_system.py /app/rag_system.py
+ADD ./.streamlit /app/.streamlit
+
+WORKDIR /app
