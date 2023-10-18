@@ -159,7 +159,7 @@ class EmbeddingProcessor(experimental.TorchBatchProcessor):
 
 
 if __name__ == "__main__":
-    dataset = ds.DocumentDataset(ds.load_dataset())
+    dataset = ds.DocumentDataset()
 
     experimental.torch_batch_process(
         EmbeddingProcessor,

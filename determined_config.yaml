@@ -19,7 +19,7 @@ bind_mounts:
   - host_path: /home/sugiyama/github/determined
     container_path: /determined
 resources:
-  slots_per_trial: 1
+  slots_per_trial: 2
   shm_size: 274877906944
 max_restarts: 0
 profiling:

@@ -26,7 +26,7 @@ fastchat: ## Start FastChat API Server.
 
 rag-app: ## Run RAG-System app.
 	docker run -d --rm --name rag-system -p 8501:8501 \
-		--gpus '"device=6,7"' --shm-size=32g \
+		--gpus '"device=4,5"' --shm-size=32g \
 		--net rag-with-mlde_default \
 		-e no_proxy="fastchat-controller,fastchat-model-worker,fastchat-api-server,localhost,127.0.0.1,ponkots01,16.171.32.68,10.0.0.0/8,192.168.0.0/16,172.16.0.0/16" \
 		-v /data/home/sugiyama/.cache:/root/.cache \
