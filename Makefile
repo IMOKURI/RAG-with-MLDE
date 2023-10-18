@@ -6,12 +6,14 @@ IMAGE_TAG = latest
 
 
 build: ## Build container image.
-	docker build --build-arg PROXY=$(http_proxy) -t localhost:32000/determined:$(IMAGE_TAG) -f Dockerfile.determined .
+	docker build --build-arg PROXY=$(http_proxy) -t baseimage:$(IMAGE_TAG) -f Dockerfile.baseimage .
+	docker build --build-arg PROXY=$(http_proxy) -t determined:$(IMAGE_TAG) -f Dockerfile.determined .
 	docker build --build-arg PROXY=$(http_proxy) -t fastchat:$(IMAGE_TAG) -f Dockerfile.fastchat .
 	docker build --build-arg PROXY=$(http_proxy) -t streamlit:$(IMAGE_TAG) -f Dockerfile.streamlit .
 
-push: ## Push container image to registry.
-	docker push localhost:32000/determined:$(IMAGE_TAG)
+
+up-determined: ## Start Determined cluster.
+	det deploy local cluster-up
 
 
 batch-inference: ## Run batch inference.
@@ -33,8 +35,12 @@ rag-app: ## Run RAG-System app.
 		streamlit run rag_system.py
 
 
-down: ## Stop containers.
+down: down-rag down-fastchat ## Stop all containers.
+
+down-rag: ## Stop RAG-System.
 	docker stop rag-system
+
+down-fastchat: ## Stop FastChat API Server.
 	docker compose down
 
 

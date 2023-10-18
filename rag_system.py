@@ -73,10 +73,11 @@ def embedding(input_text: str) -> np.ndarray:
 def search_index(embedded_text: np.ndarray) -> str:
     distances, indices = index.search(embedded_text, k=1)
 
-    cursor.execute("SELECT document FROM documents WHERE id = ?", indices[0])
+    cursor.execute("SELECT document FROM documents WHERE id = ?", (str(indices[0][0]),))
     document = cursor.fetchone()
 
     st.write("Reference Document")
+    st.info(f"Document ID: {indices[0][0]}")
     st.info(document[0])
 
     return document[0]
@@ -103,7 +104,7 @@ def time_since(since):
 
 
 with st.form("my_form"):
-    text = st.text_area("Enter text:", "ツイッターが最近行った調査について教えてください。")
+    text = st.text_area("Enter text:", "Determined のインストール方法を教えてください。")
     submitted = st.form_submit_button("Submit")
 
     if submitted:

@@ -7,9 +7,10 @@ import sqlite3
 import faiss
 import numpy as np
 import torch
-from datasets import load_dataset
 from determined.pytorch import experimental
 from transformers import AutoModel, AutoTokenizer
+
+import create_dataset as ds
 
 
 class EmbeddingProcessor(experimental.TorchBatchProcessor):
@@ -32,9 +33,10 @@ class EmbeddingProcessor(experimental.TorchBatchProcessor):
         os.makedirs(self.output_dir, exist_ok=True)
 
     def process_batch(self, batch, batch_idx) -> None:
+        logging.info(f"Processing batch {batch_idx}")
         with torch.no_grad():
             tokenized_text = self.tokenizer.batch_encode_plus(
-                batch["content"],
+                batch["text"],
                 truncation=True,
                 padding="max_length",
                 max_length=512,
@@ -57,8 +59,10 @@ class EmbeddingProcessor(experimental.TorchBatchProcessor):
             self.output.append(
                 {
                     "embeddings": outputs,
-                    "id": [int(u.rsplit("/", 2)[1]) for u in batch["url"]],
-                    "text": batch["content"],
+                    "seq_id": batch["seq_id"],
+                    "text": batch["text"],
+                    "categories": batch["categories"],
+                    "filename": batch["filename"],
                 }
             )
             self.last_index = batch_idx
@@ -108,34 +112,43 @@ class EmbeddingProcessor(experimental.TorchBatchProcessor):
 
             conn = sqlite3.connect(document_db_path)
             cursor = conn.cursor()
-            cursor.execute("CREATE TABLE IF NOT EXISTS documents (id TEXT PRIMARY KEY, document TEXT)")
+            cursor.execute(
+                "CREATE TABLE IF NOT EXISTS documents "
+                "(id TEXT PRIMARY KEY, document TEXT, categories TEXT, filename TEXT)"
+            )
 
             embeddings = []
             documents = []
             ids = []
+            num_ids = []
+            categories = []
+            filenames = []
 
             for file in os.listdir(self.output_dir):
                 file_path = pathlib.Path(self.output_dir, file)
                 batches = torch.load(file_path, map_location="cuda:0")
                 for batch in batches:
                     embeddings.append(batch["embeddings"].cpu().detach().numpy())
-                    ids += batch["id"]
+                    ids += batch["seq_id"]
+                    num_ids += list(map(int, batch["seq_id"]))
                     documents += batch["text"]
+                    categories += batch["categories"]
+                    filenames += batch["filename"]
 
             embeddings = np.concatenate(embeddings)
-            ids = np.array(ids)
-            print(f"Enbeddings shape: {embeddings.shape}, Ids shape: {ids.shape}")
-            print(f"Ids: {ids}")
+            num_ids = np.array(num_ids)
+            logging.info(f"Enbeddings shape: {embeddings.shape}, Ids shape: {num_ids.shape}")
 
-            index.add_with_ids(embeddings, ids)
+            index.add_with_ids(embeddings, num_ids)
 
             # index = faiss.index_gpu_to_cpu(self.index)
             faiss.write_index(index, embedding_db_path)
 
             cursor.executemany(
-                "INSERT INTO documents (id,document) VALUES (?,?) "
-                + "ON CONFLICT (id) DO UPDATE SET document=EXCLUDED.document",
-                [(id, doc) for id, doc in zip(ids, documents)],
+                "INSERT INTO documents (id,document,categories,filename) VALUES (?,?,?,?) "
+                "ON CONFLICT (id) DO UPDATE SET "
+                "document=EXCLUDED.document, categories=EXCLUDED.categories, filename=EXCLUDED.filename",
+                [(id, doc, cat, file) for id, doc, cat, file in zip(ids, documents, categories, filenames)],
             )
             conn.commit()
 
@@ -146,10 +159,8 @@ class EmbeddingProcessor(experimental.TorchBatchProcessor):
 
 
 if __name__ == "__main__":
-    dataset = load_dataset("llm-book/livedoor-news-corpus", split="train")
-    # Persisting embeddings can take quite a while on Chroma
-    # Adding a limit on dataset size to ensure the example finishes sooner
-    # dataset = dataset.select(list(range(100)))
+    dataset = ds.DocumentDataset(ds.load_dataset())
+
     experimental.torch_batch_process(
         EmbeddingProcessor,
         dataset,

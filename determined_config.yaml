@@ -6,15 +6,18 @@ environment:
     - http_proxy=http://hpeproxy.its.hpecorp.net:8080/
     - https_proxy=http://hpeproxy.its.hpecorp.net:8080/
     - no_proxy=localhost,127.0.0.1,ponkots01,16.171.32.68,10.0.0.0/8,192.168.0.0/16,172.16.0.0/16
-  #   - NCCL_DEBUG=INFO
+    # - CUDA_LAUNCH_BLOCKING=1
+    # - NCCL_DEBUG=INFO
   image:
-    gpu: localhost:32000/determined:latest
+    gpu: determined:latest
   force_pull_image: false
 bind_mounts:
   - host_path: /data/home/sugiyama/rag-system
     container_path: rag-system
-  - host_path: /home/sugi/.cache
+  - host_path: /data/home/sugiyama/.cache
     container_path: /root/.cache
+  - host_path: /home/sugiyama/github/determined
+    container_path: /determined
 resources:
   slots_per_trial: 1
   shm_size: 274877906944
@@ -29,5 +32,5 @@ searcher:
   max_length: 100
   metric: x
 entrypoint: >-
-  python -m determined.launch.torch_distributed
-  python embedding_generation.py
+  python3 -m determined.launch.torch_distributed
+  python3 embedding_generation.py
