@@ -7,16 +7,20 @@ import sqlite3
 import faiss
 import numpy as np
 import torch
+from datasets import load_dataset
 from determined.pytorch import experimental
 from transformers import AutoModel, AutoTokenizer
 
 import create_dataset as ds
 
+embedding_model = "intfloat/multilingual-e5-large"
+# embedding_model = "studio-ousia/luke-japanese-large"
+
 
 class EmbeddingProcessor(experimental.TorchBatchProcessor):
     def __init__(self, context):
-        self.tokenizer = AutoTokenizer.from_pretrained("studio-ousia/luke-japanese-large")
-        self.model = AutoModel.from_pretrained("studio-ousia/luke-japanese-large", output_hidden_states=True)
+        self.tokenizer = AutoTokenizer.from_pretrained(embedding_model)
+        self.model = AutoModel.from_pretrained(embedding_model, output_hidden_states=True)
 
         self.device = context.device
 
@@ -36,7 +40,8 @@ class EmbeddingProcessor(experimental.TorchBatchProcessor):
         logging.info(f"Processing batch {batch_idx}")
         with torch.no_grad():
             tokenized_text = self.tokenizer.batch_encode_plus(
-                batch["text"],
+                # batch["text"],
+                batch["content"],
                 truncation=True,
                 padding="max_length",
                 max_length=512,
@@ -59,10 +64,12 @@ class EmbeddingProcessor(experimental.TorchBatchProcessor):
             self.output.append(
                 {
                     "embeddings": outputs,
-                    "seq_id": batch["seq_id"],
-                    "text": batch["text"],
-                    "categories": batch["categories"],
-                    "filename": batch["filename"],
+                    "seq_id": [u.rsplit("/", 2)[1] for u in batch["url"]],
+                    "text": batch["content"],
+                    # "seq_id": batch["seq_id"],
+                    # "text": batch["text"],
+                    # "categories": batch["categories"],
+                    # "filename": batch["filename"],
                 }
             )
             self.last_index = batch_idx
@@ -112,17 +119,14 @@ class EmbeddingProcessor(experimental.TorchBatchProcessor):
 
             conn = sqlite3.connect(document_db_path)
             cursor = conn.cursor()
-            cursor.execute(
-                "CREATE TABLE IF NOT EXISTS documents "
-                "(id TEXT PRIMARY KEY, document TEXT, categories TEXT, filename TEXT)"
-            )
+            cursor.execute("CREATE TABLE IF NOT EXISTS documents " "(id TEXT PRIMARY KEY, document TEXT)")
 
             embeddings = []
             documents = []
             ids = []
             num_ids = []
-            categories = []
-            filenames = []
+            # categories = []
+            # filenames = []
 
             for file in os.listdir(self.output_dir):
                 file_path = pathlib.Path(self.output_dir, file)
@@ -132,8 +136,8 @@ class EmbeddingProcessor(experimental.TorchBatchProcessor):
                     ids += batch["seq_id"]
                     num_ids += list(map(int, batch["seq_id"]))
                     documents += batch["text"]
-                    categories += batch["categories"]
-                    filenames += batch["filename"]
+                    # categories += batch["categories"]
+                    # filenames += batch["filename"]
 
             embeddings = np.concatenate(embeddings)
             num_ids = np.array(num_ids)
@@ -145,10 +149,10 @@ class EmbeddingProcessor(experimental.TorchBatchProcessor):
             faiss.write_index(index, embedding_db_path)
 
             cursor.executemany(
-                "INSERT INTO documents (id,document,categories,filename) VALUES (?,?,?,?) "
+                "INSERT INTO documents (id,document) VALUES (?,?) "
                 "ON CONFLICT (id) DO UPDATE SET "
-                "document=EXCLUDED.document, categories=EXCLUDED.categories, filename=EXCLUDED.filename",
-                [(id, doc, cat, file) for id, doc, cat, file in zip(ids, documents, categories, filenames)],
+                "document=EXCLUDED.document",
+                [(id, doc) for id, doc in zip(ids, documents)],
             )
             conn.commit()
 
@@ -159,11 +163,12 @@ class EmbeddingProcessor(experimental.TorchBatchProcessor):
 
 
 if __name__ == "__main__":
-    dataset = ds.DocumentDataset()
+    # dataset = ds.DocumentDataset()
+    dataset = load_dataset("llm-book/livedoor-news-corpus", split="train")
 
     experimental.torch_batch_process(
         EmbeddingProcessor,
         dataset,
-        batch_size=64,
+        batch_size=32,
         checkpoint_interval=10,
     )

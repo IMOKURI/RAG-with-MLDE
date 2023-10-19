@@ -21,14 +21,17 @@ batch-inference: ## Run batch inference.
 
 
 fastchat: ## Start FastChat API Server.
-	docker compose up -d
+	docker compose --project-name llm1 --env-file fastchat1.env up -d
+
+fastchat-all: ## Start multiple FastChat API Server.
+	docker compose --project-name llm2 --env-file fastchat2.env up -d
 
 
 rag-app: ## Run RAG-System app.
 	docker run -d --rm --name rag-system -p 8501:8501 \
-		--gpus '"device=4,5"' --shm-size=32g \
+		--gpus '"device=6,7"' --shm-size=32g \
 		--net rag-with-mlde_default \
-		-e no_proxy="fastchat-controller,fastchat-model-worker,fastchat-api-server,localhost,127.0.0.1,ponkots01,16.171.32.68,10.0.0.0/8,192.168.0.0/16,172.16.0.0/16" \
+		-e no_proxy="fastchat-controller,fastchat-llm-worker,fastchat-api-server,localhost,127.0.0.1,ponkots01,16.171.32.68,10.0.0.0/8,192.168.0.0/16,172.16.0.0/16" \
 		-v /data/home/sugiyama/.cache:/root/.cache \
 		-v /data/home/sugiyama/rag-system:/app/rag-system \
 		streamlit:$(IMAGE_TAG) \
@@ -41,7 +44,10 @@ down-rag: ## Stop RAG-System.
 	docker stop rag-system
 
 down-fastchat: ## Stop FastChat API Server.
-	docker compose down
+	docker compose --project-name llm1 --env-file fastchat1.env down
+
+down-fastchat-all: ## Stop multiple FastChat API Server.
+	docker compose --project-name llm2 --env-file fastchat2.env down
 
 
 help: ## Show this help

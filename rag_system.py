@@ -11,6 +11,9 @@ import torch
 from langchain.llms import OpenAI
 from transformers import AutoModel, AutoTokenizer
 
+embedding_model = "intfloat/multilingual-e5-large"
+# embedding_model = "studio-ousia/luke-japanese-large"
+
 ################################################################################
 # Initialize StreamLit
 ################################################################################
@@ -47,8 +50,8 @@ cursor = conn.cursor()
 ################################################################################
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
-tokenizer = AutoTokenizer.from_pretrained("studio-ousia/luke-japanese-large")
-model = AutoModel.from_pretrained("studio-ousia/luke-japanese-large", output_hidden_states=True)
+tokenizer = AutoTokenizer.from_pretrained(embedding_model)
+model = AutoModel.from_pretrained(embedding_model, output_hidden_states=True)
 model = model.to(device)
 model.eval()
 
@@ -71,16 +74,22 @@ def embedding(input_text: str) -> np.ndarray:
 
 
 def search_index(embedded_text: np.ndarray) -> str:
-    distances, indices = index.search(embedded_text, k=1)
+    distances, indices = index.search(embedded_text, k=3)
+    indices = indices.tolist()[0]
+    st.info(f"Document IDs: {indices}")
 
-    cursor.execute("SELECT document FROM documents WHERE id = ?", (str(indices[0][0]),))
-    document = cursor.fetchone()
+    query = f"SELECT document FROM documents WHERE id in ({','.join(['?'] * len(indices))})"
+    cursor.execute(query, indices)
+    documents = cursor.fetchall()
 
-    st.write("Reference Document")
-    st.info(f"Document ID: {indices[0][0]}")
-    st.info(document[0])
+    st.write("Reference Documents")
+    docs = []
+    for doc in documents:
+        st.info(doc[0])
+        docs.append(f'"""\n{doc[0]}\n"""')
+    docs = "\n\n".join(docs)
 
-    return document[0]
+    return docs
 
 
 def generate_response(input_text: str):
@@ -104,7 +113,7 @@ def time_since(since):
 
 
 with st.form("my_form"):
-    text = st.text_area("Enter text:", "Determined のインストール方法を教えてください。")
+    text = st.text_area("Enter text:", "ツイッターが最近行った調査について教えてください。")
     submitted = st.form_submit_button("Submit")
 
     if submitted:
@@ -113,6 +122,8 @@ with st.form("my_form"):
         document = search_index(embedded_text)
 
         prompt = f"### Context:\n{document}\n\n### Human:\n{text}\n\n### Assistant:\n"
+        st.write("Prompt")
+        st.info(prompt)
 
         generate_response(prompt)
 

@@ -1,16 +1,23 @@
-version: "3.8"
+version: "0.1"
 
 services:
   fastchat-controller:
     environment:
-      no_proxy: "fastchat-controller,fastchat-model-worker,fastchat-api-server,localhost,127.0.0.1,ponkots01,16.171.32.68,10.0.0.0/8,192.168.0.0/16,172.16.0.0/16"
+      no_proxy: "fastchat-controller,fastchat-llm-worker,fastchat-api-server,localhost,127.0.0.1,ponkots01,16.171.32.68,10.0.0.0/8,192.168.0.0/16,172.16.0.0/16"
     image: fastchat:latest
     ports:
-      - "21001:21001"
-    entrypoint: ["python3", "-m", "fastchat.serve.controller", "--host", "0.0.0.0", "--port", "21001"]
-  fastchat-model-worker:
+      - "${CONTROLLER_PORT}:${CONTROLLER_PORT}"
+    entrypoint:
+      - "python3"
+      - "-m"
+      - "fastchat.serve.controller"
+      - "--host"
+      - "0.0.0.0"
+      - "--port"
+      - "${CONTROLLER_PORT}"
+  fastchat-llm-worker:
     environment:
-      no_proxy: "fastchat-controller,fastchat-model-worker,fastchat-api-server,localhost,127.0.0.1,ponkots01,16.171.32.68,10.0.0.0/8,192.168.0.0/16,172.16.0.0/16"
+      no_proxy: "fastchat-controller,fastchat-llm-worker,fastchat-api-server,localhost,127.0.0.1,ponkots01,16.171.32.68,10.0.0.0/8,192.168.0.0/16,172.16.0.0/16"
     volumes:
       - /data/home/sugiyama/.cache/huggingface:/root/.cache/huggingface
     image: fastchat:latest
@@ -19,13 +26,41 @@ services:
         reservations:
           devices:
             - driver: nvidia
-              device_ids: ['2', '3']
+              device_ids:
+                - "${GPU0}"
+                - "${GPU1}"
               capabilities: [gpu]
-    entrypoint: ["python3", "-m", "fastchat.serve.model_worker", "--model-names", "${FASTCHAT_WORKER_MODEL_NAMES:-vicuna-13b-v1.5}", "--model-path", "${FASTCHAT_WORKER_MODEL_PATH:-lmsys/vicuna-13b-v1.5}", "--worker-address", "http://fastchat-model-worker:21002", "--controller-address", "http://fastchat-controller:21001", "--host", "0.0.0.0", "--port", "21002", "--num-gpus", "2"]
+    entrypoint:
+      - "python3"
+      - "-m"
+      - "fastchat.serve.model_worker"
+      - "--model-names"
+      - "gpt-3.5-turbo,text-davinci-003,text-embedding-ada-002"
+      - "--model-path"
+      - "lmsys/vicuna-13b-v1.5"
+      - "--worker-address"
+      - "http://fastchat-llm-worker:${MODEL_WORKER_PORT}"
+      - "--controller-address"
+      - "http://fastchat-controller:${CONTROLLER_PORT}"
+      - "--host"
+      - "0.0.0.0"
+      - "--port"
+      - "${MODEL_WORKER_PORT}"
+      - "--num-gpus"
+      - "2"
   fastchat-api-server:
     environment:
-      no_proxy: "fastchat-controller,fastchat-model-worker,fastchat-api-server,localhost,127.0.0.1,ponkots01,16.171.32.68,10.0.0.0/8,192.168.0.0/16,172.16.0.0/16"
+      no_proxy: "fastchat-controller,fastchat-llm-worker,fastchat-api-server,localhost,127.0.0.1,ponkots01,16.171.32.68,10.0.0.0/8,192.168.0.0/16,172.16.0.0/16"
     image: fastchat:latest
     ports:
-      - "8000:8000"
-    entrypoint: ["python3", "-m", "fastchat.serve.openai_api_server", "--controller-address", "http://fastchat-controller:21001", "--host", "0.0.0.0", "--port", "8000"]
+      - "${API_SERVER_PORT}:${API_SERVER_PORT}"
+    entrypoint:
+      - "python3"
+      - "-m"
+      - "fastchat.serve.openai_api_server"
+      - "--controller-address"
+      - "http://fastchat-controller:${CONTROLLER_PORT}"
+      - "--host"
+      - "0.0.0.0"
+      - "--port"
+      - "${API_SERVER_PORT}"

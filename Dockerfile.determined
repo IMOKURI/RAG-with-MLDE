@@ -13,4 +13,5 @@ RUN pip install --no-cache -U \
     faiss-gpu \
     llama-index \
     openai \
+    pypdf \
     tensorboard

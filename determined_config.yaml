@@ -18,8 +18,10 @@ bind_mounts:
     container_path: /root/.cache
   - host_path: /home/sugiyama/github/determined
     container_path: /determined
+  - host_path: /home/sugiyama/github/swarm-learning
+    container_path: /swarm-learning
 resources:
-  slots_per_trial: 2
+  slots_per_trial: 4
   shm_size: 274877906944
 max_restarts: 0
 profiling:
