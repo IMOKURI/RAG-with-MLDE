@@ -2,77 +2,48 @@ import logging
 import os
 import pathlib
 import shutil
-import sqlite3
 
-import faiss
 import numpy as np
 import torch
 from datasets import load_dataset
 from determined.pytorch import experimental
-from transformers import AutoModel, AutoTokenizer
 
-import create_dataset as ds
-
-embedding_model = "intfloat/multilingual-e5-large"
-# embedding_model = "studio-ousia/luke-japanese-large"
+from rag_utils import DocumentDB, EmbeddingModel, IndexDB
 
 
 class EmbeddingProcessor(experimental.TorchBatchProcessor):
     def __init__(self, context):
-        self.tokenizer = AutoTokenizer.from_pretrained(embedding_model)
-        self.model = AutoModel.from_pretrained(embedding_model, output_hidden_states=True)
+        self.model_names = [
+            # "cl-nagoya/sup-simcse-ja-large",
+            "intfloat/multilingual-e5-large",
+            # "pkshatech/GLuCoSE-base-ja",
+            "studio-ousia/luke-japanese-large",
+        ]
 
-        self.device = context.device
+        self.models = [EmbeddingModel(model_name, context) for model_name in self.model_names]
 
-        self.model = context.prepare_model_for_inference(self.model)
-        self.index_dim = self.model.pooler.dense.out_features
+        self.outputs = {model_name: [] for model_name in self.model_names}
 
-        self.output = []
-
-        self.context = context
         self.last_index = 0
-        self.rank = self.context.get_distributed_rank()
+        self.rank = context.get_distributed_rank()
 
         self.output_dir = "rag-system/processing"
         os.makedirs(self.output_dir, exist_ok=True)
 
     def process_batch(self, batch, batch_idx) -> None:
         logging.info(f"Processing batch {batch_idx}")
-        with torch.no_grad():
-            tokenized_text = self.tokenizer.batch_encode_plus(
-                # batch["text"],
-                batch["content"],
-                truncation=True,
-                padding="max_length",
-                max_length=512,
-                add_special_tokens=True,
-            )
-            inputs = torch.tensor(tokenized_text["input_ids"])
-            inputs = inputs.to(self.device)
-            masks = torch.tensor(tokenized_text["attention_mask"])
-            masks = masks.to(self.device)
 
-            outputs = self.model(inputs, masks)
-
-            # To create an embedding vector for each document,
-            # 1. we take the hidden states from the last layer (output["hidden_states"][-1]),
-            #    which is a tensor of (#examples, #tokens, #hidden_states) size.
-            # 2. we calculate the average across the token-dimension, resulting in a tensor of
-            #    (#examples, #hidden_states) size.
-            outputs = torch.mean(outputs["hidden_states"][-1], dim=1)
-
-            self.output.append(
+        for model in self.models:
+            outputs = model.inference(batch)
+            self.outputs[model.model_name].append(
                 {
                     "embeddings": outputs,
                     "seq_id": [u.rsplit("/", 2)[1] for u in batch["url"]],
                     "text": batch["content"],
-                    # "seq_id": batch["seq_id"],
-                    # "text": batch["text"],
-                    # "categories": batch["categories"],
-                    # "filename": batch["filename"],
                 }
             )
-            self.last_index = batch_idx
+
+        self.last_index = batch_idx
 
     def on_checkpoint_start(self):
         """
@@ -83,12 +54,12 @@ class EmbeddingProcessor(experimental.TorchBatchProcessor):
         - files created by different workers
         - files created by the same worker for different batches of input data
         """
-        if len(self.output) == 0:
+        if len(self.outputs) == 0:
             return
         file_name = f"embedding_worker_{self.rank}_end_batch_{self.last_index}"
         file_path = pathlib.Path(self.output_dir, file_name)
-        torch.save(self.output, file_path)
-        self.output = []
+        torch.save(self.outputs, file_path)
+        self.outputs = {model_name: [] for model_name in self.model_names}
 
     def on_finish(self):
         """
@@ -103,67 +74,41 @@ class EmbeddingProcessor(experimental.TorchBatchProcessor):
         if self.rank == 0:
             db_dir = "rag-system/db"
             os.makedirs(db_dir, exist_ok=True)
-            embedding_db_path = os.path.join(db_dir, "embedding.index")
-            document_db_path = os.path.join(db_dir, "document.db")
 
-            if os.path.exists(embedding_db_path):
-                # index_cpu = faiss.read_index(embedding_db_path)
-                # index = faiss.index_cpu_to_all_gpus(index_cpu)
-                index = faiss.read_index(embedding_db_path)
-            else:
-                # res = faiss.StandardGpuResources()
-                # config = faiss.GpuIndexFlatConfig()
-                # base_index = faiss.GpuIndexFlatL2(res, self.index_dim, config)
-                base_index = faiss.IndexFlatL2(self.index_dim)
-                index = faiss.IndexIDMap(base_index)
+            for model in self.models:
+                embeddings = []
+                documents = []
+                ids = []
+                num_ids = []
 
-            conn = sqlite3.connect(document_db_path)
-            cursor = conn.cursor()
-            cursor.execute("CREATE TABLE IF NOT EXISTS documents " "(id TEXT PRIMARY KEY, document TEXT)")
+                for file in os.listdir(self.output_dir):
+                    file_path = pathlib.Path(self.output_dir, file)
+                    batches = torch.load(file_path, map_location="cuda:0")[model.model_name]
+                    for batch in batches:
+                        embeddings.append(batch["embeddings"].cpu().detach().numpy())
+                        ids += batch["seq_id"]
+                        num_ids += list(map(int, batch["seq_id"]))
+                        documents += batch["text"]
 
-            embeddings = []
-            documents = []
-            ids = []
-            num_ids = []
-            # categories = []
-            # filenames = []
+                embeddings = np.concatenate(embeddings)
+                num_ids = np.array(num_ids)
+                logging.info(f"Enbeddings shape: {embeddings.shape}, Ids shape: {num_ids.shape}")
 
-            for file in os.listdir(self.output_dir):
-                file_path = pathlib.Path(self.output_dir, file)
-                batches = torch.load(file_path, map_location="cuda:0")
-                for batch in batches:
-                    embeddings.append(batch["embeddings"].cpu().detach().numpy())
-                    ids += batch["seq_id"]
-                    num_ids += list(map(int, batch["seq_id"]))
-                    documents += batch["text"]
-                    # categories += batch["categories"]
-                    # filenames += batch["filename"]
+                model_name = model.model_name.replace("/", "_")
 
-            embeddings = np.concatenate(embeddings)
-            num_ids = np.array(num_ids)
-            logging.info(f"Enbeddings shape: {embeddings.shape}, Ids shape: {num_ids.shape}")
+                embedding_db_path = os.path.join(db_dir, f"{model_name}_embedding.index")
+                index_db = IndexDB(embedding_db_path, model.index_dim)
+                index_db.update(num_ids, embeddings)
 
-            index.add_with_ids(embeddings, num_ids)
-
-            # index = faiss.index_gpu_to_cpu(self.index)
-            faiss.write_index(index, embedding_db_path)
-
-            cursor.executemany(
-                "INSERT INTO documents (id,document) VALUES (?,?) "
-                "ON CONFLICT (id) DO UPDATE SET "
-                "document=EXCLUDED.document",
-                [(id, doc) for id, doc in zip(ids, documents)],
-            )
-            conn.commit()
-
-            logging.info(f"Embedding contains {len(ids)} entries")
+                document_db_path = os.path.join(db_dir, f"{model_name}_document.db")
+                document_db = DocumentDB(document_db_path)
+                document_db.update(ids, documents)
 
             # Clean-up temporary embedding files
             shutil.rmtree(self.output_dir)
 
 
 if __name__ == "__main__":
-    # dataset = ds.DocumentDataset()
     dataset = load_dataset("llm-book/livedoor-news-corpus", split="train")
 
     experimental.torch_batch_process(
