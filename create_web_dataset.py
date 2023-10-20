@@ -1,8 +1,22 @@
+"""
+参照:
+LlamaIndex - Web Page Reader
+https://gpt-index.readthedocs.io/en/latest/examples/data_connectors/WebPageDemo.html
+"""
+
 import logging
 
+import nest_asyncio
 import openai
-from llama_index import PromptHelper, ServiceContext, SimpleWebPageReader, SummaryIndex
-from llama_index.embeddings import OpenAIEmbedding
+from llama_index import (
+    DocumentSummaryIndex,
+    OpenAIEmbedding,
+    PromptHelper,
+    ServiceContext,
+    SimpleWebPageReader,
+    SummaryIndex,
+    get_response_synthesizer,
+)
 from llama_index.llms import OpenAI
 from llama_index.node_parser import SimpleNodeParser
 from llama_index.text_splitter import TokenTextSplitter
@@ -16,6 +30,9 @@ openai.api_base = openai_api_base
 
 def main():
     logging.basicConfig(level=logging.DEBUG)
+
+    # 非同期処理の有効化
+    # nest_asyncio.apply()
 
     documents = SimpleWebPageReader(html_to_text=True).load_data(["http://paulgraham.com/worked.html"])
     logging.info("Loaded %d documents", len(documents))
@@ -32,12 +49,23 @@ def main():
         llm=llm, embed_model=embed_model, node_parser=node_parser, prompt_helper=prompt_helper
     )
 
-    index = SummaryIndex.from_documents(documents, service_context=service_context, show_progress=True)
+    response_synthesizer = get_response_synthesizer(
+        response_mode="tree_summarize", use_async=True
+    )
 
-    query_engine = index.as_query_engine()
-    response = query_engine.query("What did the author do growing up?")
+    doc_summary_index = DocumentSummaryIndex.from_documents(
+        documents,
+        service_context=service_context,
+        response_synthesizer=response_synthesizer,
+        show_progress=True,
+    )
 
-    logging.info(response)
+    # index = SummaryIndex.from_documents(documents, service_context=service_context, show_progress=True)
+
+    # query_engine = index.as_query_engine()
+    # response = query_engine.query("What did the author do growing up?")
+
+    # logging.info(response)
 
 
 if __name__ == "__main__":

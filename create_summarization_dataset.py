@@ -5,35 +5,22 @@ https://note.com/npaka/n/n78a1184706d7
 """
 
 import logging
-import os
-import re
 
 import nest_asyncio
 import openai
-import tiktoken
 from datasets import load_dataset
-from langchain.embeddings.openai import OpenAIEmbeddings
-from langchain.llms import OpenAI
 from llama_index import (
-    GPTListIndex,
-    LangchainEmbedding,
-    LLMPredictor,
+    Document,
+    DocumentSummaryIndex,
+    OpenAIEmbedding,
+    PromptHelper,
     ServiceContext,
-    SimpleDirectoryReader,
     get_response_synthesizer,
 )
-from llama_index.indices.document_summary import DocumentSummaryIndex
-from llama_index.llms.base import ChatMessage, MessageRole
+from llama_index.llms import ChatMessage, MessageRole, OpenAI
 from llama_index.node_parser import SimpleNodeParser
-from llama_index.prompts.base import ChatPromptTemplate
-from llama_index.schema import Document
+from llama_index.prompts import ChatPromptTemplate
 from llama_index.text_splitter import TokenTextSplitter
-from torch.utils.data import Dataset
-from transformers import AutoTokenizer
-
-embedding_model = "intfloat/multilingual-e5-large"
-# embedding_model = "studio-ousia/luke-japanese-large"
-
 
 openai_api_key = "dummy"
 openai_api_base = "http://localhost:8000/v1"
@@ -101,10 +88,6 @@ CHAT_TREE_SUMMARIZE_PROMPT = ChatPromptTemplate(message_templates=TREE_SUMMARIZE
 SUMMARY_QUERY = "提供されたテキストの内容を要約してください。"
 
 
-def change_dict_key(d, old_key, new_key, default_value=None):
-    d[new_key] = d.pop(old_key, default_value)
-
-
 def main():
     logging.basicConfig(level=logging.DEBUG)
 
@@ -113,45 +96,41 @@ def main():
 
     dataset = load_dataset("llm-book/livedoor-news-corpus", split="train")
 
-    logging.info("Creating LLM...")
-    llm = OpenAI(openai_api_key=openai_api_key, openai_api_base=openai_api_base, batch_size=1)
-
-    # docs = []
+    docs = []
     for n, data in enumerate(dataset):
-        content = (
-            f"タイトル: {data['title']}\n"
-            f"カテゴリ: {data['category']}\n"
-            f"本文: {data['content']}\n\n"
-            "---------------------\n"
-            "上記の文章を200字程度で要約してください。\n"
-        )
-
-        logging.info(f"n: {n}, title: {data['title']}, summary: {llm(content)}")
-        # doc = Document(text=data["content"])
+        logging.info(f"n: {n}, title: {data['title']}")
+        doc = Document(text=data["content"])
         # doc.doc_id = data["title"]
-        # docs.append(doc)
-        if n > 2:
+        docs.append(doc)
+        if n > 5:
             break
 
-    # logging.info("Creating ServiceContext...")
-    # service_context = ServiceContext.from_defaults(llm=llm, chunk_size=1024)
-    #
-    # logging.info("Creating ResponseSynthesizer...")
-    # response_synthesizer = get_response_synthesizer(
-    #     response_mode="tree_summarize",
-    #     use_async=True,
-    #     text_qa_template=CHAT_TEXT_QA_PROMPT,
-    #     summary_template=CHAT_TREE_SUMMARIZE_PROMPT,
-    # )
+    llm = OpenAI(batch_size=1, max_tokens=256)
+    embed_model = OpenAIEmbedding(embed_batch_size=1)
 
-    # logging.info("Creating DocumentSummaryIndex...")
-    # doc_summary_index = DocumentSummaryIndex.from_documents(
-    #     docs,
-    #     service_context=service_context,
-    #     response_synthesizer=response_synthesizer,
-    #     summary_query=SUMMARY_QUERY,
-    #     show_progress=True,
-    # )
+    text_splitter = TokenTextSplitter(chunk_size=256, chunk_overlap=20)
+    node_parser = SimpleNodeParser(text_splitter=text_splitter)
+
+    prompt_helper = PromptHelper(context_window=256, num_output=256, chunk_overlap_ratio=0.1, chunk_size_limit=None)
+
+    service_context = ServiceContext.from_defaults(
+        llm=llm, embed_model=embed_model, node_parser=node_parser, prompt_helper=prompt_helper
+    )
+
+    response_synthesizer = get_response_synthesizer(
+        response_mode="tree_summarize",
+        use_async=True,
+        text_qa_template=CHAT_TEXT_QA_PROMPT,
+        summary_template=CHAT_TREE_SUMMARIZE_PROMPT,
+    )
+
+    doc_summary_index = DocumentSummaryIndex.from_documents(
+        docs,
+        service_context=service_context,
+        response_synthesizer=response_synthesizer,
+        summary_query=SUMMARY_QUERY,
+        show_progress=True,
+    )
 
 
 if __name__ == "__main__":
