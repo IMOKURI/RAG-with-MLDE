@@ -14,7 +14,6 @@ from llama_index import (
     PromptHelper,
     ServiceContext,
     SimpleWebPageReader,
-    SummaryIndex,
     get_response_synthesizer,
 )
 from llama_index.llms import OpenAI
@@ -29,15 +28,17 @@ openai.api_base = openai_api_base
 
 
 def main():
-    logging.basicConfig(level=logging.DEBUG)
+    logging.basicConfig(level=logging.INFO)
 
     # 非同期処理の有効化
-    # nest_asyncio.apply()
+    nest_asyncio.apply()
 
-    documents = SimpleWebPageReader(html_to_text=True).load_data(["http://paulgraham.com/worked.html"])
+    documents = SimpleWebPageReader(html_to_text=True).load_data(
+        ["https://imokuri-com.pages.dev/blog/2022/06/hpe-swarm-learning-intro/"]
+    )
     logging.info("Loaded %d documents", len(documents))
 
-    llm = OpenAI(batch_size=1, max_tokens=256)
+    llm = OpenAI(temperature=0, batch_size=1, max_tokens=256)
     embed_model = OpenAIEmbedding(embed_batch_size=1)
 
     text_splitter = TokenTextSplitter(chunk_size=1024, chunk_overlap=20)
@@ -49,23 +50,19 @@ def main():
         llm=llm, embed_model=embed_model, node_parser=node_parser, prompt_helper=prompt_helper
     )
 
-    response_synthesizer = get_response_synthesizer(
-        response_mode="tree_summarize", use_async=True
-    )
+    response_synthesizer = get_response_synthesizer(response_mode="tree_summarize", use_async=True)
 
-    doc_summary_index = DocumentSummaryIndex.from_documents(
+    index = DocumentSummaryIndex.from_documents(
         documents,
         service_context=service_context,
         response_synthesizer=response_synthesizer,
         show_progress=True,
     )
 
-    # index = SummaryIndex.from_documents(documents, service_context=service_context, show_progress=True)
+    query_engine = index.as_query_engine()
+    response = query_engine.query("Swarm Learning はどんな課題を解決するソリューションですか？")
 
-    # query_engine = index.as_query_engine()
-    # response = query_engine.query("What did the author do growing up?")
-
-    # logging.info(response)
+    logging.info(response)
 
 
 if __name__ == "__main__":
