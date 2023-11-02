@@ -2,7 +2,7 @@ version: "0.1"
 
 services:
   fastchat-controller:
-    image: fastchat:latest
+    image: rag-system:latest
     ports:
       - "20000:20000"
     entrypoint:
@@ -16,7 +16,7 @@ services:
   fastchat-llm-worker:
     volumes:
       - /data/home/sugiyama/.cache/huggingface:/root/.cache/huggingface
-    image: fastchat:latest
+    image: rag-system:latest
     deploy:
       resources:
         reservations:
@@ -43,7 +43,7 @@ services:
       - "--num-gpus"
       - "2"
   fastchat-api-server:
-    image: fastchat:latest
+    image: rag-system:latest
     ports:
       - "8000:8000"
     entrypoint:

@@ -1,4 +1,0 @@
-FROM baseimage:latest
-
-RUN pip install --no-cache-dir --upgrade \
-    fschat[model_worker]

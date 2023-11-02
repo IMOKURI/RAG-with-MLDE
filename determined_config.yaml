@@ -6,7 +6,7 @@ environment:
     # - CUDA_LAUNCH_BLOCKING=1
     # - NCCL_DEBUG=INFO
   image:
-    gpu: determined:latest
+    gpu: rag-system:latest
   force_pull_image: false
 bind_mounts:
   - host_path: /data/home/sugiyama/rag-system

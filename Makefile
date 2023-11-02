@@ -3,10 +3,7 @@
 
 
 build: ## Build container image.
-	docker build -t baseimage:latest -f Dockerfile.baseimage .
-	docker build -t determined:latest -f Dockerfile.determined .
-	docker build -t fastchat:latest -f Dockerfile.fastchat .
-	docker build -t streamlit:latest -f Dockerfile.streamlit .
+	docker build -t rag-system:latest .
 
 
 up-determined: ## Start Determined cluster.
@@ -27,7 +24,7 @@ rag-app: ## Run RAG-System app.
 		--net llm_default \
 		-v /home/hpe01/.cache:/root/.cache \
 		-v $(pwd):/app \
-		streamlit:latest \
+		rag-system:latest \
 		streamlit run rag_system.py
 
 
