@@ -15,7 +15,7 @@ class EmbeddingProcessor(experimental.TorchBatchProcessor):
     def __init__(self, context):
         self.model_names = [
             # "cl-nagoya/sup-simcse-ja-large",
-            "intfloat/multilingual-e5-large",
+            # "intfloat/multilingual-e5-large",
             # "pkshatech/GLuCoSE-base-ja",
             "studio-ousia/luke-japanese-large",
         ]

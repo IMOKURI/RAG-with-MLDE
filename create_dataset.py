@@ -90,16 +90,8 @@ class DocumentDataset(Dataset):
 def main():
     logging.basicConfig(level=logging.DEBUG)
 
-    # ds = DocumentDataset("/home/sugiyama/github/determined/docs")
-    ds = DocumentDataset("/home/sugiyama/github/swarm-learning/docs")
-
-    print("=====")
-    print(ds[0])
-    print("=====")
-    print(ds[1])
-    print("=====")
-    print(ds[-1])
-
+    # ds = DocumentDataset("/home/hpe01/github/determined/docs")
+    ds = DocumentDataset("/home/hpe01/github/swarm-learning/docs")
 
 if __name__ == "__main__":
     main()

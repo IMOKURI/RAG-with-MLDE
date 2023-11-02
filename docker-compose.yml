@@ -15,7 +15,7 @@ services:
       - "20000"
   fastchat-llm-worker:
     volumes:
-      - /data/home/sugiyama/.cache/huggingface:/root/.cache/huggingface
+      - /home/hpe01/.cache/huggingface:/root/.cache/huggingface
     image: rag-system:latest
     deploy:
       resources:
@@ -41,7 +41,7 @@ services:
       - "--port"
       - "21000"
       - "--num-gpus"
-      - "2"
+      - "1"
   fastchat-api-server:
     image: rag-system:latest
     ports:
@@ -56,3 +56,8 @@ services:
       - "0.0.0.0"
       - "--port"
       - "8000"
+
+networks:
+  default:
+    name: rag-system
+    external: true

@@ -1,22 +1,18 @@
-name: batch-inference
-workspace: batch-inference
+name: embedding
+workspace: rag-system
 project: embedding
 environment:
-  environment_variables:
-    # - CUDA_LAUNCH_BLOCKING=1
-    # - NCCL_DEBUG=INFO
+  # environment_variables:
+  #   - CUDA_LAUNCH_BLOCKING=1
+  #   - NCCL_DEBUG=INFO
   image:
     gpu: rag-system:latest
   force_pull_image: false
 bind_mounts:
-  - host_path: /data/home/sugiyama/rag-system
+  - host_path: /home/hpe01/github/RAG-with-MLDE/rag-system
     container_path: rag-system
-  - host_path: /data/home/sugiyama/.cache
+  - host_path: /home/hpe01/.cache
     container_path: /root/.cache
-  - host_path: /home/sugiyama/github/determined
-    container_path: /determined
-  - host_path: /home/sugiyama/github/swarm-learning
-    container_path: /swarm-learning
 resources:
   slots_per_trial: 1
   shm_size: 137438953472

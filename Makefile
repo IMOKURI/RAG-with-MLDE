@@ -15,17 +15,22 @@ batch-inference: ## Run batch inference.
 
 
 fastchat: ## Start FastChat API Server.
-	docker compose --project-name llm --env-file fastchat1.env up -d
+	docker compose --project-name llm up -d
 
 
 rag-app: ## Run RAG-System app.
 	docker run -d --rm --name rag-system -p 8501:8501 \
 		--gpus all --shm-size=32g \
-		--net llm_default \
+		--net rag-system \
 		-v /home/hpe01/.cache:/root/.cache \
-		-v $(pwd):/app \
+		-v $(shell pwd):/app \
 		rag-system:latest \
 		streamlit run rag_system.py
+
+
+chat: ## Run chat.
+	python3 -m fastchat.serve.cli --num-gpus 1 --model-path lmsys/vicuna-13b-v1.5
+
 
 
 down: down-rag down-fastchat ## Stop all containers.
@@ -34,7 +39,7 @@ down-rag: ## Stop RAG-System.
 	docker stop rag-system
 
 down-fastchat: ## Stop FastChat API Server.
-	docker compose --project-name llm --env-file fastchat1.env down
+	docker compose --project-name llm down
 
 
 help: ## Show this help
