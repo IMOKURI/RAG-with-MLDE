@@ -3,9 +3,6 @@ workspace: batch-inference
 project: embedding
 environment:
   environment_variables:
-    - http_proxy=http://hpeproxy.its.hpecorp.net:8080/
-    - https_proxy=http://hpeproxy.its.hpecorp.net:8080/
-    - no_proxy=localhost,127.0.0.1,ponkots01,16.171.32.68,10.0.0.0/8,192.168.0.0/16,172.16.0.0/16
     # - CUDA_LAUNCH_BLOCKING=1
     # - NCCL_DEBUG=INFO
   image:
@@ -21,14 +18,9 @@ bind_mounts:
   - host_path: /home/sugiyama/github/swarm-learning
     container_path: /swarm-learning
 resources:
-  slots_per_trial: 8
-  shm_size: 274877906944
+  slots_per_trial: 1
+  shm_size: 137438953472
 max_restarts: 0
-profiling:
-  enabled: true
-  begin_on_batch: 0
-  end_after_batch: null
-  sync_timings: false
 searcher:
   name: single
   max_length: 100

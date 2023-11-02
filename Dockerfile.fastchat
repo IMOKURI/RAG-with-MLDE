@@ -1,8 +1,4 @@
 FROM baseimage:latest
 
-ARG PROXY
-
-ENV http_proxy=$PROXY \
-    https_proxy=$PROXY
-
-RUN pip install fschat[model_worker]
+RUN pip install --no-cache-dir --upgrade \
+    fschat[model_worker]

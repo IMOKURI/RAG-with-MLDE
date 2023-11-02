@@ -1,14 +1,6 @@
 FROM baseimage:latest
 
-ARG PROXY
-
-ENV http_proxy=$PROXY \
-    https_proxy=$PROXY
-
-RUN apt-get update && \
-    apt-get install -y daemontools
-
-RUN pip install --no-cache -U \
+RUN pip install --no-cache-dir --upgrade \
     determined \
     faiss-gpu \
     html2text \

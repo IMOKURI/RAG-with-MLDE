@@ -1,15 +1,12 @@
 .PHONY: help
 .DEFAULT_GOAL := help
 
-NOW = $(shell date '+%Y%m%d-%H%M%S')
-IMAGE_TAG = latest
-
 
 build: ## Build container image.
-	docker build --build-arg PROXY=$(http_proxy) -t baseimage:$(IMAGE_TAG) -f Dockerfile.baseimage .
-	docker build --build-arg PROXY=$(http_proxy) -t determined:$(IMAGE_TAG) -f Dockerfile.determined .
-	docker build --build-arg PROXY=$(http_proxy) -t fastchat:$(IMAGE_TAG) -f Dockerfile.fastchat .
-	docker build --build-arg PROXY=$(http_proxy) -t streamlit:$(IMAGE_TAG) -f Dockerfile.streamlit .
+	docker build -t baseimage:latest -f Dockerfile.baseimage .
+	docker build -t determined:latest -f Dockerfile.determined .
+	docker build -t fastchat:latest -f Dockerfile.fastchat .
+	docker build -t streamlit:latest -f Dockerfile.streamlit .
 
 
 up-determined: ## Start Determined cluster.
@@ -21,17 +18,16 @@ batch-inference: ## Run batch inference.
 
 
 fastchat: ## Start FastChat API Server.
-	docker compose --project-name llm1 --env-file fastchat1.env up -d
+	docker compose --project-name llm --env-file fastchat1.env up -d
 
 
 rag-app: ## Run RAG-System app.
 	docker run -d --rm --name rag-system -p 8501:8501 \
-		--gpus '"device=6,7"' --shm-size=32g \
-		--net llm1_default \
-		-e no_proxy="fastchat-controller,fastchat-llm-worker,fastchat-api-server,localhost,127.0.0.1,ponkots01,16.171.32.68,10.0.0.0/8,192.168.0.0/16,172.16.0.0/16" \
-		-v /data/home/sugiyama/.cache:/root/.cache \
-		-v /data/home/sugiyama/rag-system:/app/rag-system \
-		streamlit:$(IMAGE_TAG) \
+		--gpus all --shm-size=32g \
+		--net llm_default \
+		-v /home/hpe01/.cache:/root/.cache \
+		-v $(pwd):/app \
+		streamlit:latest \
 		streamlit run rag_system.py
 
 
@@ -41,7 +37,7 @@ down-rag: ## Stop RAG-System.
 	docker stop rag-system
 
 down-fastchat: ## Stop FastChat API Server.
-	docker compose --project-name llm1 --env-file fastchat1.env down
+	docker compose --project-name llm --env-file fastchat1.env down
 
 
 help: ## Show this help

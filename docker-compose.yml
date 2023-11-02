@@ -2,11 +2,9 @@ version: "0.1"
 
 services:
   fastchat-controller:
-    environment:
-      no_proxy: "fastchat-controller,fastchat-llm-worker,fastchat-api-server,localhost,127.0.0.1,ponkots01,16.171.32.68,10.0.0.0/8,192.168.0.0/16,172.16.0.0/16"
     image: fastchat:latest
     ports:
-      - "${CONTROLLER_PORT}:${CONTROLLER_PORT}"
+      - "20000:20000"
     entrypoint:
       - "python3"
       - "-m"
@@ -14,10 +12,8 @@ services:
       - "--host"
       - "0.0.0.0"
       - "--port"
-      - "${CONTROLLER_PORT}"
+      - "20000"
   fastchat-llm-worker:
-    environment:
-      no_proxy: "fastchat-controller,fastchat-llm-worker,fastchat-api-server,localhost,127.0.0.1,ponkots01,16.171.32.68,10.0.0.0/8,192.168.0.0/16,172.16.0.0/16"
     volumes:
       - /data/home/sugiyama/.cache/huggingface:/root/.cache/huggingface
     image: fastchat:latest
@@ -26,9 +22,7 @@ services:
         reservations:
           devices:
             - driver: nvidia
-              device_ids:
-                - "${GPU0}"
-                - "${GPU1}"
+              count: 1
               capabilities: [gpu]
     entrypoint:
       - "python3"
@@ -39,28 +33,26 @@ services:
       - "--model-path"
       - "lmsys/vicuna-13b-v1.5"
       - "--worker-address"
-      - "http://fastchat-llm-worker:${MODEL_WORKER_PORT}"
+      - "http://fastchat-llm-worker:21000"
       - "--controller-address"
-      - "http://fastchat-controller:${CONTROLLER_PORT}"
+      - "http://fastchat-controller:20000"
       - "--host"
       - "0.0.0.0"
       - "--port"
-      - "${MODEL_WORKER_PORT}"
+      - "21000"
       - "--num-gpus"
       - "2"
   fastchat-api-server:
-    environment:
-      no_proxy: "fastchat-controller,fastchat-llm-worker,fastchat-api-server,localhost,127.0.0.1,ponkots01,16.171.32.68,10.0.0.0/8,192.168.0.0/16,172.16.0.0/16"
     image: fastchat:latest
     ports:
-      - "${API_SERVER_PORT}:${API_SERVER_PORT}"
+      - "8000:8000"
     entrypoint:
       - "python3"
       - "-m"
       - "fastchat.serve.openai_api_server"
       - "--controller-address"
-      - "http://fastchat-controller:${CONTROLLER_PORT}"
+      - "http://fastchat-controller:20000"
       - "--host"
       - "0.0.0.0"
       - "--port"
-      - "${API_SERVER_PORT}"
+      - "8000"
