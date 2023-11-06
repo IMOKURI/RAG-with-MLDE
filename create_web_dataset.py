@@ -122,6 +122,7 @@ def main():
 
     documents_data = [
         {"title": "swarm-learning-introduction", "url": "https://imokuri.com/blog/2022/06/hpe-swarm-learning-intro/"},
+        {"title": "greenlake-for-llm", "url": "https://prtimes.jp/main/html/rd/p/000000117.000045092.html"}
     ]
 
     web_documents = SimpleWebPageReader(html_to_text=True).load_data([d["url"] for d in documents_data])
@@ -162,13 +163,13 @@ def main():
         summary_query=SUMMARY_QUERY,
     )
 
-    logging.info(index.get_document_summary("swarm-learning-introduction"))
+    # logging.info(index.get_document_summary("greenlake-for-llm"))
 
     query_engine = index.as_query_engine(
         choice_select_prompt=DEFAULT_CHOICE_SELECT_PROMPT,
         response_synthesizer=response_synthesizer,
     )
-    response = query_engine.query("Swarm Learning にはどんなコンポーネントがありますか？")
+    response = query_engine.query("HPE が提供する予定の LLM を as a Service として提供するサービスは何ですか？")
 
     logging.info(response)
 

@@ -29,7 +29,7 @@ up-rag: ## Run RAG-System app.
 
 
 chat: ## Run chat.
-	python3 -m fastchat.serve.cli --num-gpus 1 --model-path cyberagent/calm2-7b-chat
+	python3 -m fastchat.serve.cli --num-gpus 1 --model-path lmsys/vicuna-13b-v1.5
 
 
 
