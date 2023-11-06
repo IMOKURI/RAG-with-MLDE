@@ -12,7 +12,9 @@ LLM RAG System with MLDE
 
 ## Prerequisite
 
-- determined cluster (>= 0.26)
+``` bash
+docker create network rag-system
+```
 
 ## How to Run
 
@@ -22,20 +24,26 @@ LLM RAG System with MLDE
 make build
 ```
 
+### Start determined cluster
+
+``` bash
+make up-determined
+```
+
 ### Create Embedding DB
 
 ``` bash
-make batch-inference
+make run-inference
 ```
 
 ### Start LLM
 
 ``` bash
-make fastchat
+make up-fastchat
 ```
 
 ### Start RAG System
 
 ``` bash
-make rag-app
+make up-rag
 ```

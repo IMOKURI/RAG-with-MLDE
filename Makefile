@@ -10,15 +10,15 @@ up-determined: ## Start Determined cluster.
 	det deploy local cluster-up
 
 
-batch-inference: ## Run batch inference.
+run-inference: ## Run batch inference.
 	det experiment create ./determined_config.yaml .
 
 
-fastchat: ## Start FastChat API Server.
+up-fastchat: ## Start FastChat API Server.
 	docker compose --project-name llm up -d
 
 
-rag-app: ## Run RAG-System app.
+up-rag: ## Run RAG-System app.
 	docker run -d --rm --name rag-system -p 8501:8501 \
 		--gpus all --shm-size=32g \
 		--net rag-system \
@@ -29,17 +29,20 @@ rag-app: ## Run RAG-System app.
 
 
 chat: ## Run chat.
-	python3 -m fastchat.serve.cli --num-gpus 1 --model-path lmsys/vicuna-13b-v1.5
+	python3 -m fastchat.serve.cli --num-gpus 1 --model-path cyberagent/calm2-7b-chat
 
 
 
-down: down-rag down-fastchat ## Stop all containers.
+down: down-rag down-fastchat down-determined ## Stop all containers.
 
 down-rag: ## Stop RAG-System.
-	docker stop rag-system
+	docker stop rag-system || :
 
 down-fastchat: ## Stop FastChat API Server.
-	docker compose --project-name llm down
+	docker compose --project-name llm down || :
+
+down-determined: ## Stop Determined cluster.
+	det deploy local cluster-down || :
 
 
 help: ## Show this help
