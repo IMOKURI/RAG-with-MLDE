@@ -24,6 +24,8 @@ from llama_index.prompts.base import ChatPromptTemplate
 from llama_index.prompts.base import PromptTemplate
 from llama_index.prompts.prompt_type import PromptType
 
+import web_dataset as wds
+
 
 openai_api_key = "dummy"
 openai_api_base = "http://localhost:8000/v1"
@@ -120,14 +122,12 @@ def main():
     # 非同期処理の有効化
     nest_asyncio.apply()
 
-    documents_data = [
-        {"title": "swarm-learning-introduction", "url": "https://imokuri.com/blog/2022/06/hpe-swarm-learning-intro/"},
-        {"title": "greenlake-for-llm", "url": "https://prtimes.jp/main/html/rd/p/000000117.000045092.html"}
-    ]
+    ds = wds.WebDocument("./document_list.csv")
 
-    web_documents = SimpleWebPageReader(html_to_text=True).load_data([d["url"] for d in documents_data])
+    logging.info("Loading documents...")
+    web_documents = SimpleWebPageReader(html_to_text=True).load_data([d["url"] for d in ds])
     documents = []
-    for doc_data, web_doc in zip(documents_data, web_documents):
+    for doc_data, web_doc in zip(ds, web_documents):
         web_doc.doc_id = doc_data["title"]
         documents.append(web_doc)
     logging.info("Loaded %d documents", len(documents))
@@ -155,6 +155,7 @@ def main():
         summary_template=CHAT_TREE_SUMMARIZE_PROMPT,
     )
 
+    logging.info("Building index...")
     index = DocumentSummaryIndex.from_documents(
         documents,
         service_context=service_context,
@@ -163,14 +164,13 @@ def main():
         summary_query=SUMMARY_QUERY,
     )
 
-    # logging.info(index.get_document_summary("greenlake-for-llm"))
+    # logging.info(index.get_document_summary("swarm learning 概要"))
 
     query_engine = index.as_query_engine(
         choice_select_prompt=DEFAULT_CHOICE_SELECT_PROMPT,
         response_synthesizer=response_synthesizer,
     )
     response = query_engine.query("HPE が提供する予定の LLM を as a Service として提供するサービスは何ですか？")
-
     logging.info(response)
 
 
