@@ -5,8 +5,11 @@ from torch.utils.data import Dataset
 
 
 class WebDocument(Dataset):
-    def __init__(self, document_list: str):
+    def __init__(self, document_list: str, size: int = 0):
         self.df = pd.read_csv(document_list)
+
+        if size > 0:
+            self.df = self.df[:size]
 
     def __len__(self):
         return len(self.df)

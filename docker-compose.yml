@@ -31,7 +31,7 @@ services:
       - "--model-names"
       - "gpt-3.5-turbo,text-davinci-003,text-embedding-ada-002"
       - "--model-path"
-      - "lmsys/vicuna-13b-v1.5"
+      - "lmsys/vicuna-13b-v1.5-16k"
       - "--worker-address"
       - "http://fastchat-llm-worker:21000"
       - "--controller-address"

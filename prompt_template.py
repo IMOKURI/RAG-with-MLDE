@@ -1,38 +1,6 @@
-"""
-参照:
-LlamaIndex - Web Page Reader
-https://gpt-index.readthedocs.io/en/latest/examples/data_connectors/WebPageDemo.html
-"""
-
-import logging
-
-import nest_asyncio
-import openai
-from llama_index import (
-    DocumentSummaryIndex,
-    OpenAIEmbedding,
-    PromptHelper,
-    ServiceContext,
-    SimpleWebPageReader,
-    get_response_synthesizer,
-)
-from llama_index.llms import OpenAI
-from llama_index.node_parser import SimpleNodeParser
-from llama_index.text_splitter import TokenTextSplitter
 from llama_index.llms.base import ChatMessage, MessageRole
-from llama_index.prompts.base import ChatPromptTemplate
-from llama_index.prompts.base import PromptTemplate
+from llama_index.prompts.base import ChatPromptTemplate, PromptTemplate
 from llama_index.prompts.prompt_type import PromptType
-
-import web_dataset as wds
-
-
-openai_api_key = "dummy"
-openai_api_base = "http://localhost:8000/v1"
-
-openai.api_key = openai_api_key
-openai.api_base = openai_api_base
-
 
 # QAシステムプロンプト
 TEXT_QA_SYSTEM_PROMPT = ChatMessage(
@@ -114,65 +82,3 @@ DEFAULT_CHOICE_SELECT_PROMPT_TMPL = (
 
 # ChoiceSelectプロンプト
 DEFAULT_CHOICE_SELECT_PROMPT = PromptTemplate(DEFAULT_CHOICE_SELECT_PROMPT_TMPL, prompt_type=PromptType.CHOICE_SELECT)
-
-
-def main():
-    logging.basicConfig(level=logging.INFO)
-
-    # 非同期処理の有効化
-    nest_asyncio.apply()
-
-    ds = wds.WebDocument("./document_list.csv")
-
-    logging.info("Loading documents...")
-    web_documents = SimpleWebPageReader(html_to_text=True).load_data([d["url"] for d in ds])
-    documents = []
-    for doc_data, web_doc in zip(ds, web_documents):
-        web_doc.doc_id = doc_data["title"]
-        documents.append(web_doc)
-    logging.info("Loaded %d documents", len(documents))
-
-    llm = OpenAI(temperature=0, batch_size=1, max_tokens=512)
-    embed_model = OpenAIEmbedding(embed_batch_size=1)
-
-    text_splitter = TokenTextSplitter(
-        separator="。", chunk_size=4096, chunk_overlap=64, backup_separators=["、", " ", "\n"]
-    )
-    node_parser = SimpleNodeParser(text_splitter=text_splitter)
-
-    prompt_helper = PromptHelper(
-        context_window=4096, num_output=512, chunk_overlap_ratio=0.1, chunk_size_limit=None, separator="。"
-    )
-
-    service_context = ServiceContext.from_defaults(
-        llm=llm, embed_model=embed_model, node_parser=node_parser, prompt_helper=prompt_helper
-    )
-
-    response_synthesizer = get_response_synthesizer(
-        response_mode="tree_summarize",
-        use_async=True,
-        text_qa_template=CHAT_TEXT_QA_PROMPT,
-        summary_template=CHAT_TREE_SUMMARIZE_PROMPT,
-    )
-
-    logging.info("Building index...")
-    index = DocumentSummaryIndex.from_documents(
-        documents,
-        service_context=service_context,
-        response_synthesizer=response_synthesizer,
-        show_progress=True,
-        summary_query=SUMMARY_QUERY,
-    )
-
-    # logging.info(index.get_document_summary("swarm learning 概要"))
-
-    query_engine = index.as_query_engine(
-        choice_select_prompt=DEFAULT_CHOICE_SELECT_PROMPT,
-        response_synthesizer=response_synthesizer,
-    )
-    response = query_engine.query("HPE が提供する予定の LLM を as a Service として提供するサービスは何ですか？")
-    logging.info(response)
-
-
-if __name__ == "__main__":
-    main()
