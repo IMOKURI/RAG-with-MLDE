@@ -113,10 +113,8 @@ def main():
     retriever = DocumentSummaryIndexLLMRetriever(
         doc_summary_index,
         choice_select_prompt=pt.DEFAULT_CHOICE_SELECT_PROMPT,
-        choice_batch_size=1,
+        # choice_batch_size=10,
         choice_top_k=1,
-        # format_node_batch_fn=None,
-        # parse_choice_select_answer_fn=None,
         service_context=service_context,
     )
 
@@ -134,6 +132,7 @@ def main():
     logging.info(response)
 
     logging.info(f"Done ... {time_since(start)}")
+
 
 def get_args():
     parser = argparse.ArgumentParser(description=""" This is great script! """)
