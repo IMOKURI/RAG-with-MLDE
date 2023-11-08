@@ -12,7 +12,8 @@ def main():
     client = mii.client("mii")
 
     response = client.generate("東京の観光名所は、", max_new_tokens=1024)
-    logging.info(response.response)
+    logging.info(type(response.response[0]))
+    logging.info(response.response[0])
 
     if args.shutdown_server:
         client.terminate_server()

@@ -8,7 +8,6 @@ import argparse
 import logging
 
 import nest_asyncio
-import openai
 from llama_index import (
     DocumentSummaryIndex,
     OpenAIEmbedding,
@@ -26,17 +25,15 @@ from llama_index.storage.docstore import SimpleDocumentStore
 from llama_index.storage.index_store import SimpleIndexStore
 from llama_index.text_splitter import TokenTextSplitter
 from llama_index.vector_stores import SimpleVectorStore
+from llama_index.response_synthesizers import ResponseMode
 
 import web_dataset as wds
 import prompt_template as pt
+from deepspeed_mii_model import DeepSpeedMiiLLM
 
 
 openai_api_key = "dummy"
 openai_api_base = "http://localhost:8000/v1"
-
-openai.api_key = openai_api_key
-openai.api_base = openai_api_base
-
 
 
 def main():
@@ -47,6 +44,34 @@ def main():
 
     # 非同期処理の有効化
     nest_asyncio.apply()
+
+    logging.info("Initializing embedding models...")
+    embed_model = OpenAIEmbedding(embed_batch_size=1, api_key=openai_api_key, api_base=openai_api_base)
+
+    logging.info("Initializing LLM...")
+    llm = OpenAI(temperature=0, batch_size=1, max_tokens=512, api_key=openai_api_key, api_base=openai_api_base)
+    # llm = DeepSpeedMiiLLM(model_name="mii", max_tokens=512, with_server=True)
+
+    text_splitter = TokenTextSplitter(
+        separator="。", chunk_size=16384, chunk_overlap=64, backup_separators=["、", " ", "\n"]
+    )
+    node_parser = SimpleNodeParser(text_splitter=text_splitter)
+
+    prompt_helper = PromptHelper(
+        context_window=16384, num_output=512, chunk_overlap_ratio=0.05, chunk_size_limit=None, separator="。"
+    )
+
+    service_context = ServiceContext.from_defaults(
+        llm=llm, embed_model=embed_model, node_parser=node_parser, prompt_helper=prompt_helper
+    )
+
+    response_synthesizer = get_response_synthesizer(
+        response_mode=ResponseMode.TREE_SUMMARIZE,
+        service_context=service_context,
+        use_async=True,
+        text_qa_template=pt.CHAT_TEXT_QA_PROMPT,
+        summary_template=pt.CHAT_TREE_SUMMARIZE_PROMPT,
+    )
 
     if args.build_index:
         ds = wds.WebDocument("./document_list.csv", size=3)
@@ -59,29 +84,6 @@ def main():
             web_doc[0].doc_id = doc_data["doc_id"]
             documents.extend(web_doc)
         logging.info("Loaded %d documents", len(documents))
-
-        llm = OpenAI(temperature=0, batch_size=1, max_tokens=512)
-        embed_model = OpenAIEmbedding(embed_batch_size=1)
-
-        text_splitter = TokenTextSplitter(
-            separator="。", chunk_size=16384, chunk_overlap=64, backup_separators=["、", " ", "\n"]
-        )
-        node_parser = SimpleNodeParser(text_splitter=text_splitter)
-
-        prompt_helper = PromptHelper(
-            context_window=16384, num_output=512, chunk_overlap_ratio=0.05, chunk_size_limit=None, separator="。"
-        )
-
-        service_context = ServiceContext.from_defaults(
-            llm=llm, embed_model=embed_model, node_parser=node_parser, prompt_helper=prompt_helper
-        )
-
-        response_synthesizer = get_response_synthesizer(
-            response_mode="tree_summarize",
-            use_async=True,
-            text_qa_template=pt.CHAT_TEXT_QA_PROMPT,
-            summary_template=pt.CHAT_TREE_SUMMARIZE_PROMPT,
-        )
 
         logging.info("Building index...")
         index = DocumentSummaryIndex.from_documents(
@@ -110,19 +112,15 @@ def main():
     logging.info("Getting document summary...")
     logging.info(doc_summary_index.get_document_summary("id-002"))
 
-    logging.info("Querying...")
-    response_synthesizer = get_response_synthesizer(
-        response_mode="tree_summarize",
-        use_async=True,
-        text_qa_template=pt.CHAT_TEXT_QA_PROMPT,
-        summary_template=pt.CHAT_TREE_SUMMARIZE_PROMPT,
-    )
-    query_engine = doc_summary_index.as_query_engine(
-        choice_select_prompt=pt.DEFAULT_CHOICE_SELECT_PROMPT,
-        response_synthesizer=response_synthesizer,
-    )
-    response = query_engine.query("Swarm Learning とは何ですか？")
-    logging.info(response)
+    # logging.info("Querying...")
+    # query_engine = doc_summary_index.as_query_engine(
+    #     choice_select_prompt=pt.DEFAULT_CHOICE_SELECT_PROMPT,
+    #     response_synthesizer=response_synthesizer,
+    # )
+    # response = query_engine.query("Swarm Learning とは何ですか？")
+    # logging.info(response)
+
+    # llm.terminate_server()
 
 
 def get_args():
@@ -132,7 +130,7 @@ def get_args():
     """
     )
 
-    parser.add_argument("--build-index", action="store_true", help="Use this flag to build index.")
+    parser.add_argument("-b", "--build-index", action="store_true", help="Use this flag to build index.")
 
     return parser.parse_args()
 
