@@ -1,5 +1,4 @@
 import logging
-import math
 import os
 import time
 
@@ -8,18 +7,7 @@ import streamlit as st
 from langchain.llms import OpenAI
 
 from rag_utils import DocumentDB, EmbeddingModel, IndexDB
-
-
-def as_minutes(s):
-    m = math.floor(s / 60)
-    s -= m * 60
-    return "%dm %ds" % (m, s)
-
-
-def time_since(since):
-    now = time.time()
-    s = now - since
-    return f"Run time: {as_minutes(s)}"
+from utils import time_since
 
 
 def main():
