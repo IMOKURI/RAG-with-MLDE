@@ -50,12 +50,12 @@ def main():
     llm = OpenAI(temperature=0, batch_size=1, max_tokens=512, api_key=openai_api_key, api_base=openai_api_base)
 
     text_splitter = TokenTextSplitter(
-        separator="。", chunk_size=16384, chunk_overlap=64, backup_separators=["、", " ", "\n"]
+        separator="。", chunk_size=4096, chunk_overlap=64, backup_separators=["、", " ", "\n"]
     )
     node_parser = SimpleNodeParser(text_splitter=text_splitter)
 
     prompt_helper = PromptHelper(
-        context_window=16384, num_output=512, chunk_overlap_ratio=0.05, chunk_size_limit=None, separator="。"
+        context_window=4096, num_output=512, chunk_overlap_ratio=0.05, chunk_size_limit=None, separator="。"
     )
 
     service_context = ServiceContext.from_defaults(
@@ -63,15 +63,15 @@ def main():
     )
 
     response_synthesizer = get_response_synthesizer(
-        response_mode=ResponseMode.TREE_SUMMARIZE,
         service_context=service_context,
-        use_async=True,
         text_qa_template=pt.CHAT_TEXT_QA_PROMPT,
         summary_template=pt.CHAT_TREE_SUMMARIZE_PROMPT,
+        response_mode=ResponseMode.TREE_SUMMARIZE,
+        use_async=True,
     )
 
     if args.build_index:
-        ds = wds.WebDocument("./document_list.csv", size=3)
+        ds = wds.WebDocument("./document_list.csv", size=2)
 
         logging.info(f"Loading documents ... {time_since(start)}")
         documents = []
@@ -87,8 +87,9 @@ def main():
             documents,
             service_context=service_context,
             response_synthesizer=response_synthesizer,
-            show_progress=True,
             summary_query=pt.SUMMARY_QUERY,
+            show_progress=True,
+            embed_summaries=False,
         )
 
         index.storage_context.persist("./rag-system")
@@ -103,11 +104,8 @@ def main():
     storage_context = StorageContext.from_defaults(docstore, indexstore, vectorstore, graphstore)
     doc_summary_index = load_index_from_storage(storage_context)
 
-    logging.info(f"Getting document relations ... {time_since(start)}")
-    logging.info(doc_summary_index.ref_doc_info)
-
-    logging.info(f"Getting document summary ... {time_since(start)}")
-    logging.info(doc_summary_index.get_document_summary("id-002"))
+    # logging.info(f"Getting document summary ... {time_since(start)}")
+    # logging.info(doc_summary_index.get_document_summary("id-003"))
 
     logging.info(f"Instanciate LLM retriever ... {time_since(start)}")
     retriever = DocumentSummaryIndexLLMRetriever(
@@ -120,7 +118,7 @@ def main():
 
     logging.info(f"Retrieve document ... {time_since(start)}")
     retrieved_nodes = retriever.retrieve("Swarm Learning とは何ですか？")
-    logging.info(retrieved_nodes[0].score)
+    logging.info(retrieved_nodes[0])
     # logging.info(retrieved_nodes[0].node.get_text())
 
     logging.info(f"Querying document ... {time_since(start)}")

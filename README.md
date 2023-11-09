@@ -24,6 +24,14 @@ docker create network rag-system
 make build
 ```
 
+### Start LLM
+
+``` bash
+make up-fastchat-controller
+make up-fastchat-model-worker
+make up-fastchat-api-server
+```
+
 ### Start determined cluster
 
 ``` bash
@@ -34,12 +42,6 @@ make up-determined
 
 ``` bash
 make run-inference
-```
-
-### Start LLM
-
-``` bash
-make up-fastchat
 ```
 
 ### Start RAG System
