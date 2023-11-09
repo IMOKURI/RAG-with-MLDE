@@ -40,13 +40,14 @@ def main():
         "\n\n"
         "- HPE Swarm Learningを構成するコンポーネントについて教えてください。\n"
         "- HPEの障害者雇用の取り組みに関して、最近受賞した賞について教えてください。\n"
+        "- ライダーカップにはどのような課題があり、HPEは2023年のライダーカップでどのようなサポートをしましたか？\n"
         "\n"
     )
 
     col1, col2 = st.columns(2)
 
     with col1:
-        st.header("LLMに直接質問した場合")
+        st.subheader("LLMに直接質問した場合")
         with st.form("llm"):
             text = st.text_area("Enter text:", "HPE Swarm Learningを構成するコンポーネントについて教えてください。")
             submitted_1 = st.form_submit_button("Submit")
@@ -63,7 +64,7 @@ def main():
         st.image(st.session_state["architectures"]["pre-trained"], caption="LLM")
 
     with col2:
-        st.header("RAGの仕組みで付加情報を取得した場合")
+        st.subheader("RAGの仕組みで付加情報を取得した場合")
         with st.form("rag"):
             text = st.text_area("Enter text:", "HPE Swarm Learningを構成するコンポーネントについて教えてください。")
             submitted_2 = st.form_submit_button("Submit")
@@ -84,6 +85,7 @@ def main():
             "\n\n"
             "- [HPE Swarm Learning とは](https://imokuri-com.pages.dev/blog/2022/06/hpe-swarm-learning-intro/)\n"
             "- [HPE、東京都 障害者雇用エクセレントカンパニー賞を受賞](https://prtimes.jp/main/html/rd/p/000000127.000045092.html)\n"
+            "- [HPE、革新的なプライベート5GとWi-Fiの統合ネットワークを2023 ライダーカップ会場に導入](https://prtimes.jp/main/html/rd/p/000000126.000045092.html)\n"
             "\n"
         )
 

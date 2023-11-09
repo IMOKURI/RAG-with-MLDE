@@ -20,14 +20,14 @@ import prompt_template as pt
 class CustomDocumentSummaryIndex:
     def __init__(self, openai_api_key: str = "dummy", openai_api_base: str = "http://localhost:8000/v1"):
         embed_model = OpenAIEmbedding(embed_batch_size=1, api_key=openai_api_key, api_base=openai_api_base)
-        self.llm = OpenAI(temperature=0, batch_size=1, max_tokens=512, api_key=openai_api_key, api_base=openai_api_base)
+        self.llm = OpenAI(temperature=0, batch_size=1, max_tokens=1024, api_key=openai_api_key, api_base=openai_api_base)
 
         text_splitter = TokenTextSplitter(
             separator="。", chunk_size=4096, chunk_overlap=64, backup_separators=["、", " ", "\n"]
         )
         node_parser = SimpleNodeParser(text_splitter=text_splitter)
         prompt_helper = PromptHelper(
-            context_window=4096, num_output=512, chunk_overlap_ratio=0.05, chunk_size_limit=None, separator="。"
+            context_window=4096, num_output=1024, chunk_overlap_ratio=0.05, chunk_size_limit=None, separator="。"
         )
 
         self.service_context = ServiceContext.from_defaults(

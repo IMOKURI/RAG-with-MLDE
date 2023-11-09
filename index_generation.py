@@ -66,7 +66,7 @@ class EmbeddingProcessor(experimental.TorchBatchProcessor):
 
 
 if __name__ == "__main__":
-    dataset = WebDocument("./document_list.csv", size=3)
+    dataset = WebDocument("./document_list.csv", size=5)
 
     experimental.torch_batch_process(
         EmbeddingProcessor,
