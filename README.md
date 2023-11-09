@@ -4,7 +4,7 @@ LLM RAG System with MLDE
 
 ## Architecture
 
-![RAG System](./images/RAG-System.drawio.png)
+![RAG System Architecture](./images/architecture.drawio.png)
 
 ## Showcase
 

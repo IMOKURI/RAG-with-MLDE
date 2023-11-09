@@ -1,5 +1,6 @@
 import logging
 import time
+from PIL import Image
 
 import streamlit as st
 
@@ -17,14 +18,29 @@ def main():
         st.session_state["rag_response"] = None
         st.session_state["rag_response_time"] = ""
 
+    if "architectures" not in st.session_state:
+        image_pretreined = Image.open("./images/pre-trained.drawio.png")
+        image_rag = Image.open("./images/rag.drawio.png")
+
+        st.session_state["architectures"] = {
+            "pre-trained": image_pretreined,
+            "rag": image_rag,
+        }
+
     st.set_page_config(page_title="😏 検索補完生成デモ", layout="wide")
 
     st.title("😏 検索補完生成デモ")
     st.write(
-        "\n"
+        "\n\n"
         "このアプリケーションは、ユーザーの質問に対し、"
         "あらかじめ取り込まれた記事の情報を元に回答する"
         "大規模言語モデルの検索補完生成(RAG)のデモンストレーションです。"
+        "\n"
+        "以下のような質問を入力してみてください。"
+        "\n\n"
+        "- HPE Swarm Learningを構成するコンポーネントについて教えてください。\n"
+        "- HPEの障害者雇用の取り組みに関して、最近受賞した賞について教えてください。\n"
+        "\n"
     )
 
     col1, col2 = st.columns(2)
@@ -44,6 +60,8 @@ def main():
                 st.info(st.session_state["llm_response"])
                 st.write(st.session_state["llm_response_time"])
 
+        st.image(st.session_state["architectures"]["pre-trained"], caption="LLM")
+
     with col2:
         st.header("RAGの仕組みで付加情報を取得した場合")
         with st.form("rag"):
@@ -58,6 +76,16 @@ def main():
                 st.write("RAG Response")
                 st.info(st.session_state["rag_response"])
                 st.write(st.session_state["rag_response_time"])
+
+        st.image(st.session_state["architectures"]["rag"], caption="RAG (Retrieval Augmented Generation)")
+
+        st.write(
+            "RAG では、回答を生成する際に以下の情報を参照しています。"
+            "\n\n"
+            "- [HPE Swarm Learning とは](https://imokuri-com.pages.dev/blog/2022/06/hpe-swarm-learning-intro/)\n"
+            "- [HPE、東京都 障害者雇用エクセレントカンパニー賞を受賞](https://prtimes.jp/main/html/rd/p/000000127.000045092.html)\n"
+            "\n"
+        )
 
 
 def llm_query(text):
