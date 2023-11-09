@@ -27,7 +27,7 @@ def main():
     document_summary_index = CustomDocumentSummaryIndex()
 
     if args.build_index:
-        ds = wds.WebDocument("./document_list.csv", size=2)
+        ds = wds.WebDocument("./document_list.csv", size=3)
 
         documents = []
         for doc_data in ds:

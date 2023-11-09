@@ -30,7 +30,7 @@ up-fastchat-model-worker: ## Start FastChat model worker.
 		rag-system:latest \
 		python3 -m fastchat.serve.model_worker \
 		--model-names gpt-3.5-turbo,text-davinci-003,text-embedding-ada-002 \
-		--model-path lmsys/vicuna-13b-v1.5 \
+		--model-path lmsys/vicuna-7b-v1.5 \
 		--worker-address http://fastchat-model-worker:21000 \
 		--controller-address http://fastchat-controller:20000 \
 		--host 0.0.0.0 \
@@ -73,7 +73,7 @@ down-determined: ## Stop Determined cluster.
 
 
 chat: ## Run chat.
-	python3 -m fastchat.serve.cli --num-gpus 1 --model-path lmsys/vicuna-13b-v1.5
+	python3 -m fastchat.serve.cli --num-gpus 1 --model-path lmsys/vicuna-7b-v1.5
 
 
 release-gpu: ## Release GPU memory.
