@@ -23,4 +23,4 @@ searcher:
   metric: x
 entrypoint: >-
   python3 -m determined.launch.torch_distributed
-  python3 embedding_generation.py
+  python3 index_generation.py
