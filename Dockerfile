@@ -16,9 +16,6 @@ RUN python3 -m pip install --no-cache-dir --upgrade transformers accelerate data
 # LLM
 RUN python3 -m pip install --no-cache-dir --upgrade openai langchain llama-index html2text
 
-# Index DB
-RUN python3 -m pip install --no-cache-dir --upgrade faiss-gpu
-
 # Determined AI
 RUN python3 -m pip install --no-cache-dir --upgrade determined tensorboard
 

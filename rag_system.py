@@ -1,96 +1,48 @@
 import logging
-import os
 import time
 
-import openai
 import streamlit as st
-from langchain.llms import OpenAI
 
-from rag_utils import DocumentDB, EmbeddingModel, IndexDB
 from utils import time_since
+from document_summary_index import CustomDocumentSummaryIndex
 
 
 def main():
     logging.basicConfig(level=logging.INFO)
 
-    model_names = [
-        # "cl-nagoya/sup-simcse-ja-large",
-        # "intfloat/multilingual-e5-large",
-        # "pkshatech/GLuCoSE-base-ja",
-        "studio-ousia/luke-japanese-large",
-    ]
+    st.set_page_config(page_title="😏 検索補完生成デモ", layout="wide")
 
-    db_dir = "/app/rag-system/db"
+    st.title("😏 検索補完生成デモ")
+    st.write(
+        "\n"
+        "このアプリケーションは、ユーザーの質問に対し、"
+        "あらかじめ取り込まれた記事の情報を元に回答する"
+        "大規模言語モデルの検索補完生成(RAG)のデモンストレーションです。"
+    )
 
-    st.set_page_config(page_title="😏 Quickstart App")
-
-    st.title("😏 Quickstart App")
-    st.write("Hello world!")
-
-    # openai_api_key = st.sidebar.text_input("OpenAI API Key", type="password")
-    openai_api_key = "dummy"
-    openai_api_base = "http://fastchat-api-server:8000/v1"
-
-    openai.api_key = openai_api_key
-    openai.api_base = openai_api_base
-
-    with st.form("rag_form"):
-        text = st.text_area("Enter text:", "ツイッターが最近行った調査について教えてください。")
+    with st.form("rag"):
+        text = st.text_area("Enter text:", "HPE Swarm Learning について教えてください。")
         submitted = st.form_submit_button("Submit")
 
         if submitted:
-            start = time.time()
+            with st.spinner(text="In progress..."):
+                query(text)
 
-            models = []
-            index_dbs = []
-            document_dbs = []
 
-            for model_name in model_names:
-                models.append(EmbeddingModel(model_name))
+def query(text):
+    start = time.time()
 
-                model_name = model_name.replace("/", "_")
+    document_summary_index = CustomDocumentSummaryIndex(openai_api_base="http://fastchat-api-server:8000/v1")
+    document_summary_index.load("/app/rag-system/worker_0_batch_0")
+    document_summary_index.as_retriever()
 
-                embedding_db_path = os.path.join(db_dir, f"{model_name}_embedding.index")
-                index_dbs.append(IndexDB(embedding_db_path))
+    response = document_summary_index.query(text)
 
-                document_db_path = os.path.join(db_dir, f"{model_name}_document.db")
-                document_dbs.append(DocumentDB(document_db_path))
-                logging.info(f"Loaded {model_name} ... {time_since(start)}")
+    st.write("LLM Response")
+    st.info(response)
 
-            llm = OpenAI(openai_api_key=openai_api_key, openai_api_base=openai_api_base, batch_size=1)
-            logging.info(f"Loaded LLM ... {time_since(start)}")
-
-            documents = []
-            for model, index_db, document_db in zip(models, index_dbs, document_dbs):
-                embedded_text = model.embedding(text)
-
-                indeices = index_db.search(embedded_text, 1)
-                documents += document_db.search(indeices)
-
-            prompt = (
-                "あなたは世界中で信頼されているQAシステムです。\n"
-                "事前知識ではなく、常に提供されたコンテキスト情報を使用してクエリに回答してください。\n"
-                "従うべきいくつかのルール:\n"
-                "1. 回答内で指定されたコンテキストを直接参照しないでください。\n"
-                "2. 「コンテキストに基づいて、...」や「コンテキスト情報は...」、"
-                "またはそれに類するような記述は避けてください。\n"
-                "3. 200文字程度で回答してください。\n"
-                "コンテキスト情報は以下のとおりです。\n"
-                "---------------------\n" + "\n---------------------\n".join(documents) + "\n---------------------\n"
-                "事前知識ではなくコンテキスト情報を考慮して、クエリに答えます。\n"
-                "疑問がある場合は、「情報無し」と答えてください。\n"
-                f"Query: {text}\n"
-                "Answer: "
-            )
-            st.write("Reference document")
-            st.info(documents[0])
-            logging.info(f"Searched index ... {time_since(start)}")
-
-            st.write("LLM Response")
-            st.info(llm(prompt))
-
-            st.write(time_since(start))
-            logging.info(f"Returned answer ... {time_since(start)}")
+    st.write(time_since(start))
+    logging.info(f"Returned LLM response ... {time_since(start)}")
 
 
 if __name__ == "__main__":

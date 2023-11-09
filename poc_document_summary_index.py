@@ -42,8 +42,11 @@ def main():
     document_summary_index.load()
     document_summary_index.as_retriever()
 
-    logging.info(f"Querying document ... {time_since(start)}")
+    logging.info(f"Querying document 1 ... {time_since(start)}")
     logging.info(document_summary_index.query("Swarm Learning とは何ですか？"))
+
+    logging.info(f"Querying document 2 ... {time_since(start)}")
+    logging.info(document_summary_index.query("HPEの障害者雇用の取り組みについて教えてください。"))
 
     logging.info(f"Done ... {time_since(start)}")
 
