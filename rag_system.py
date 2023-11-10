@@ -52,12 +52,26 @@ def main():
     )
 
     if not st.session_state["use_llm"]:
-        st.warning("この画面の表示は、LLMを使用していません。")
+        st.warning("この画面の表示は、LLMを使用していません。応答内容はイメージです。")
 
     col1, col2 = st.columns(2)
 
     with col1:
         st.subheader("LLMに直接質問した場合")
+        st.markdown(
+            """
+LLMに直接質問することのメリットとデメリット。
+
+##### メリット
+
+Work in pregress ...
+
+##### デメリット
+
+Work in pregress ...
+
+"""
+        )
         if st.session_state["use_llm"]:
             with st.form("llm"):
                 text = st.text_area("Enter text:", "HPE Swarm Learningを構成するコンポーネントについて教えてください。")
@@ -93,6 +107,20 @@ def main():
 
     with col2:
         st.subheader("RAGの仕組みで付加情報を取得した場合")
+        st.markdown(
+            """
+RAGの仕組みを利用することのメリットとデメリット。
+
+##### メリット
+
+Work in pregress ...
+
+##### デメリット
+
+Work in pregress ...
+
+"""
+        )
         if st.session_state["use_llm"]:
             with st.form("rag"):
                 text = st.text_area("Enter text:", "HPE Swarm Learningを構成するコンポーネントについて教えてください。")
@@ -127,21 +155,25 @@ def main():
             "\n"
         )
 
-
     st.subheader("アーキテクチャ紹介")
 
     st.markdown(
-"""
+        """
 このデモのアーキテクチャをご紹介します。
 
-うんぬんかんぬん。
+#### Index 作成
+
+Work in pregress ...
+
+
+#### ユーザーの質問に対する回答の生成
+
+Work in pregress ...
+
 """
     )
 
     st.image(st.session_state["architectures"]["architecture"], caption="デモのアーキテクチャ")
-
-
-
 
 
 def llm_query(text):
