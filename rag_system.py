@@ -1,15 +1,20 @@
 import logging
+import os
 import time
+
 from PIL import Image
 
-import streamlit as st
-
-from utils import time_since
 from document_summary_index import CustomDocumentSummaryIndex
+import streamlit as st
+from utils import time_since
+from showcase import llm_response_demo, rag_response_demo
 
 
 def main():
     logging.basicConfig(level=logging.INFO)
+
+    if "use_llm" not in st.session_state:
+        st.session_state["use_llm"] = os.getenv("FLAG", "False").lower() in ["t", "true", "1"]
 
     if "llm_response" not in st.session_state:
         st.session_state["llm_response"] = None
@@ -44,39 +49,70 @@ def main():
         "\n"
     )
 
+    if not st.session_state["use_llm"]:
+        st.warning("この画面の表示は、LLMを使用していません。")
+
     col1, col2 = st.columns(2)
 
     with col1:
         st.subheader("LLMに直接質問した場合")
-        with st.form("llm"):
-            text = st.text_area("Enter text:", "HPE Swarm Learningを構成するコンポーネントについて教えてください。")
-            submitted_1 = st.form_submit_button("Submit")
+        if st.session_state["use_llm"]:
+            with st.form("llm"):
+                text = st.text_area("Enter text:", "HPE Swarm Learningを構成するコンポーネントについて教えてください。")
+                submitted_1 = st.form_submit_button("Submit")
 
-            if submitted_1:
-                with st.spinner(text="In progress..."):
-                    llm_query(text)
+                if submitted_1:
+                    with st.spinner(text="検索中 ..."):
+                        llm_query(text)
 
-            if st.session_state["llm_response"] is not None:
-                st.write("LLM Response")
-                st.info(st.session_state["llm_response"])
-                st.write(st.session_state["llm_response_time"])
+                if st.session_state["llm_response"] is not None:
+                    st.write("LLM Response")
+                    st.info(st.session_state["llm_response"])
+                    st.warning(
+                        "LLMは、検索結果を生成する際に、付加情報を参照していないため、"
+                        "嘘の情報が表示されている可能性があります。 (ハルシネーション)"
+                    )
+                    st.write(st.session_state["llm_response_time"])
+
+        else:
+            text = st.selectbox(
+                "Select text:",
+                ["HPE Swarm Learningを構成するコンポーネントについて教えてください。"],
+                key="llm",
+                index=None,
+            )
+            st.info(llm_response_demo(text))
+            st.warning(
+                "LLMは、検索結果を生成する際に、付加情報を参照していないため、"
+                "嘘の情報が表示されている可能性があります。 (ハルシネーション)"
+            )
 
         st.image(st.session_state["architectures"]["pre-trained"], caption="LLM")
 
     with col2:
         st.subheader("RAGの仕組みで付加情報を取得した場合")
-        with st.form("rag"):
-            text = st.text_area("Enter text:", "HPE Swarm Learningを構成するコンポーネントについて教えてください。")
-            submitted_2 = st.form_submit_button("Submit")
+        if st.session_state["use_llm"]:
+            with st.form("rag"):
+                text = st.text_area("Enter text:", "HPE Swarm Learningを構成するコンポーネントについて教えてください。")
+                submitted_2 = st.form_submit_button("Submit")
 
-            if submitted_2:
-                with st.spinner(text="In progress..."):
-                    rag_query(text)
+                if submitted_2:
+                    with st.spinner(text="検索中 ..."):
+                        rag_query(text)
 
-            if st.session_state["rag_response"] is not None:
-                st.write("RAG Response")
-                st.info(st.session_state["rag_response"])
-                st.write(st.session_state["rag_response_time"])
+                if st.session_state["rag_response"] is not None:
+                    st.write("RAG Response")
+                    st.info(st.session_state["rag_response"])
+                    st.write(st.session_state["rag_response_time"])
+
+        else:
+            text = st.selectbox(
+                "Select text:",
+                ["HPE Swarm Learningを構成するコンポーネントについて教えてください。"],
+                key="rag",
+                index=None,
+            )
+            st.info(rag_response_demo(text))
 
         st.image(st.session_state["architectures"]["rag"], caption="RAG (Retrieval Augmented Generation)")
 

@@ -52,6 +52,7 @@ up-rag: ## Run RAG-System app.
 	docker run -d --rm --name rag-system -p 8501:8501 \
 		--gpus all --shm-size=32g \
 		--net rag-system \
+		-e USE_LLM=True \
 		-v /home/hpe01/.cache:/root/.cache \
 		-v $(shell pwd):/app \
 		rag-system:latest \
