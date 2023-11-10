@@ -3,18 +3,18 @@ import os
 import time
 
 from PIL import Image
+import streamlit as st
 
 from document_summary_index import CustomDocumentSummaryIndex
-import streamlit as st
-from utils import time_since
 from showcase import llm_response_demo, rag_response_demo
+from utils import time_since
 
 
 def main():
     logging.basicConfig(level=logging.INFO)
 
     if "use_llm" not in st.session_state:
-        st.session_state["use_llm"] = os.getenv("FLAG", "False").lower() in ["t", "true", "1"]
+        st.session_state["use_llm"] = os.getenv("USE_LLM", "False").lower() in ["t", "true", "1"]
 
     if "llm_response" not in st.session_state:
         st.session_state["llm_response"] = None
