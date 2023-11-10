@@ -119,7 +119,7 @@ def main():
         st.write(
             "RAG では、回答を生成する際に以下の情報を参照しています。"
             "\n\n"
-            "- [HPE Swarm Learning とは](https://imokuri-com.pages.dev/blog/2022/06/hpe-swarm-learning-intro/)\n"
+            "- [HPE Swarm Learning とは](https://imokuri.com/blog/2022/06/hpe-swarm-learning-intro/)\n"
             "- [HPE、東京都 障害者雇用エクセレントカンパニー賞を受賞](https://prtimes.jp/main/html/rd/p/000000127.000045092.html)\n"
             "- [HPE、革新的なプライベート5GとWi-Fiの統合ネットワークを2023 ライダーカップ会場に導入](https://prtimes.jp/main/html/rd/p/000000126.000045092.html)\n"
             "\n"
