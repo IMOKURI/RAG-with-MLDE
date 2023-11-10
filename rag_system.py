@@ -26,15 +26,17 @@ def main():
     if "architectures" not in st.session_state:
         image_pretreined = Image.open("./images/pre-trained.drawio.png")
         image_rag = Image.open("./images/rag.drawio.png")
+        image_architecture = Image.open("./images/architecture.drawio.png")
 
         st.session_state["architectures"] = {
             "pre-trained": image_pretreined,
             "rag": image_rag,
+            "architecture": image_architecture,
         }
 
-    st.set_page_config(page_title="😏 検索補完生成デモ", layout="wide")
+    st.set_page_config(page_title="📝 検索補完生成デモ", layout="wide")
 
-    st.title("😏 検索補完生成デモ")
+    st.title("📝 検索補完生成デモ")
     st.write(
         "\n\n"
         "このアプリケーションは、ユーザーの質問に対し、"
@@ -87,7 +89,7 @@ def main():
                 "嘘の情報が表示されている可能性があります。 (ハルシネーション)"
             )
 
-        st.image(st.session_state["architectures"]["pre-trained"], caption="LLM")
+        st.image(st.session_state["architectures"]["pre-trained"], caption="LLM 概要図")
 
     with col2:
         st.subheader("RAGの仕組みで付加情報を取得した場合")
@@ -114,7 +116,7 @@ def main():
             )
             st.info(rag_response_demo(text))
 
-        st.image(st.session_state["architectures"]["rag"], caption="RAG (Retrieval Augmented Generation)")
+        st.image(st.session_state["architectures"]["rag"], caption="RAG (Retrieval Augmented Generation) 概要図")
 
         st.write(
             "RAG では、回答を生成する際に以下の情報を参照しています。"
@@ -124,6 +126,22 @@ def main():
             "- [HPE、革新的なプライベート5GとWi-Fiの統合ネットワークを2023 ライダーカップ会場に導入](https://prtimes.jp/main/html/rd/p/000000126.000045092.html)\n"
             "\n"
         )
+
+
+    st.subheader("アーキテクチャ紹介")
+
+    st.markdown(
+"""
+このデモのアーキテクチャをご紹介します。
+
+うんぬんかんぬん。
+"""
+    )
+
+    st.image(st.session_state["architectures"]["architecture"], caption="デモのアーキテクチャ")
+
+
+
 
 
 def llm_query(text):
