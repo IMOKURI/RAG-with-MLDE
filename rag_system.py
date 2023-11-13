@@ -84,7 +84,11 @@ LLMに直接質問することで、素早く応答を返すことができま�
         else:
             text = st.selectbox(
                 "Select text:",
-                ["HPE Swarm Learningを構成するコンポーネントについて教えてください。"],
+                [
+                    "HPE Swarm Learningを構成するコンポーネントについて教えてください。",
+                    "HPEの障害者雇用の取り組みに関して、最近受賞した賞について教えてください。",
+                    "ライダーカップにはどのような課題があり、HPEは2023年のライダーカップでどのようなサポートをしましたか？",
+                ],
                 key="llm",
                 index=None,
             )
@@ -122,7 +126,11 @@ RAG (Retrieval Augmented Generation) とは、ユーザーからの質問に答�
         else:
             text = st.selectbox(
                 "Select text:",
-                ["HPE Swarm Learningを構成するコンポーネントについて教えてください。"],
+                [
+                    "HPE Swarm Learningを構成するコンポーネントについて教えてください。",
+                    "HPEの障害者雇用の取り組みに関して、最近受賞した賞について教えてください。",
+                    "ライダーカップにはどのような課題があり、HPEは2023年のライダーカップでどのようなサポートをしましたか？",
+                ],
                 key="rag",
                 index=None,
             )
