@@ -60,16 +60,7 @@ def main():
         st.subheader("LLMに直接質問した場合")
         st.markdown(
             """
-LLMに直接質問することのメリットとデメリット。
-
-##### メリット
-
-Work in pregress ...
-
-##### デメリット
-
-Work in pregress ...
-
+LLMに直接質問することで、素早く応答を返すことができます。
 """
         )
         if st.session_state["use_llm"]:
@@ -109,16 +100,9 @@ Work in pregress ...
         st.subheader("RAGの仕組みで付加情報を取得した場合")
         st.markdown(
             """
-RAGの仕組みを利用することのメリットとデメリット。
+RAG (Retrieval Augmented Generation) とは、ユーザーからの質問に答えるために必要な文章を検索し、LLMの入力に追加する手法です。
 
-##### メリット
-
-Work in pregress ...
-
-##### デメリット
-
-Work in pregress ...
-
+付加情報を利用することで、より正確な回答を生成することができます。
 """
         )
         if st.session_state["use_llm"]:
@@ -147,7 +131,7 @@ Work in pregress ...
         st.image(st.session_state["architectures"]["rag"], caption="RAG (Retrieval Augmented Generation) 概要図")
 
         st.write(
-            "RAG では、回答を生成する際に以下の情報を参照しています。"
+            "このデモでは、回答を生成する際に以下の情報を参照しています。"
             "\n\n"
             "- [HPE Swarm Learning とは](https://imokuri.com/blog/2022/06/hpe-swarm-learning-intro/)\n"
             "- [HPE、東京都 障害者雇用エクセレントカンパニー賞を受賞](https://prtimes.jp/main/html/rd/p/000000127.000045092.html)\n"
@@ -163,13 +147,17 @@ Work in pregress ...
 
 #### Index 作成
 
-Work in pregress ...
+付加情報として利用したいデータセットを、MLDE (Machine Learning Developement Environment) の バッチ推論 で、
+Document Summary Index に登録します。
+
+Document Summary Index は、チャンクに分割した文章の要約を保持しているインデックスです。
 
 
 #### ユーザーの質問に対する回答の生成
 
-Work in pregress ...
+ユーザーの質問にマッチする要約文を探します。
 
+その要約文の元文章を、LLM の入力に追加して、回答を生成します。
 """
     )
 
