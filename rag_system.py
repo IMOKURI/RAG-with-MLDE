@@ -69,11 +69,14 @@ LLMに直接質問することで、素早く応答を返すことができま�
                 submitted_1 = st.form_submit_button("Submit")
 
                 if submitted_1:
-                    with st.spinner(text="検索中 ..."):
-                        llm_query(text)
+                    llm_query(text)
+                    st.warning(
+                        "LLMは、検索結果を生成する際に、付加情報を参照していないため、"
+                        "嘘の情報が表示されている可能性があります。 (ハルシネーション)"
+                    )
+                    st.write(st.session_state["llm_response_time"])
 
-                if st.session_state["llm_response"] is not None:
-                    st.write("LLM Response")
+                elif st.session_state["llm_response"] is not None:
                     st.info(st.session_state["llm_response"])
                     st.warning(
                         "LLMは、検索結果を生成する際に、付加情報を参照していないため、"
@@ -115,11 +118,10 @@ RAG (Retrieval Augmented Generation) とは、ユーザーからの質問に答�
                 submitted_2 = st.form_submit_button("Submit")
 
                 if submitted_2:
-                    with st.spinner(text="検索中 ..."):
-                        rag_query(text)
+                    rag_query(text)
+                    st.write(st.session_state["rag_response_time"])
 
-                if st.session_state["rag_response"] is not None:
-                    st.write("RAG Response")
+                elif st.session_state["rag_response"] is not None:
                     st.info(st.session_state["rag_response"])
                     st.write(st.session_state["rag_response_time"])
 
@@ -175,9 +177,18 @@ Document Summary Index は、チャンクに分割した文章の要約を保持
 def llm_query(text):
     start = time.time()
 
-    document_summary_index = CustomDocumentSummaryIndex(openai_api_base="http://fastchat-api-server:8000/v1")
+    with st.spinner(text="回答生成中 ..."):
+        document_summary_index = CustomDocumentSummaryIndex(openai_api_base="http://fastchat-api-server:8000/v1")
 
-    st.session_state["llm_response"] = document_summary_index.llm.complete(text)
+        response = document_summary_index.llm.stream_complete(text)
+        result_area = st.empty()
+        result = ""
+
+        for item in response:
+            result = item.text
+            result_area.info(result)
+
+    st.session_state["llm_response"] = result
     st.session_state["llm_response_time"] = time_since(start)
 
     logging.info(f"Returned LLM response ... {time_since(start)}")
@@ -186,11 +197,24 @@ def llm_query(text):
 def rag_query(text):
     start = time.time()
 
-    document_summary_index = CustomDocumentSummaryIndex(openai_api_base="http://fastchat-api-server:8000/v1")
-    document_summary_index.load("/app/rag-system/worker_0_batch_0")
-    document_summary_index.as_retriever()
+    with st.spinner(text="付加情報 検索中 ..."):
+        document_summary_index = CustomDocumentSummaryIndex(openai_api_base="http://fastchat-api-server:8000/v1")
+        document_summary_index.load("/app/rag-system/worker_0_batch_0")
+        document_summary_index.as_retriever()
 
-    st.session_state["rag_response"] = document_summary_index.query(text)
+        response = document_summary_index.query(text)
+
+    logging.info(f"Searched addtional infomation ... {time_since(start)}")
+
+    with st.spinner(text="回答生成中 ..."):
+        result_area = st.empty()
+        result = ""
+
+        for item in response.response_gen:
+            result += item
+            result_area.info(result)
+
+    st.session_state["rag_response"] = result
     st.session_state["rag_response_time"] = time_since(start)
 
     logging.info(f"Returned RAG response ... {time_since(start)}")

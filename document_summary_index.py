@@ -20,7 +20,14 @@ import prompt_template as pt
 class CustomDocumentSummaryIndex:
     def __init__(self, openai_api_key: str = "dummy", openai_api_base: str = "http://localhost:8000/v1"):
         embed_model = OpenAIEmbedding(embed_batch_size=1, api_key=openai_api_key, api_base=openai_api_base)
-        self.llm = OpenAI(temperature=0, batch_size=1, max_tokens=1024, api_key=openai_api_key, api_base=openai_api_base)
+        self.llm = OpenAI(
+            temperature=0,
+            batch_size=1,
+            max_tokens=1024,
+            api_key=openai_api_key,
+            api_base=openai_api_base,
+            streaming=True,
+        )
 
         text_splitter = TokenTextSplitter(
             separator="。", chunk_size=4096, chunk_overlap=64, backup_separators=["、", " ", "\n"]
@@ -40,6 +47,7 @@ class CustomDocumentSummaryIndex:
             summary_template=pt.CHAT_TREE_SUMMARIZE_PROMPT,
             response_mode=ResponseMode.TREE_SUMMARIZE,
             use_async=True,
+            streaming=True,
         )
 
         self.index = None
