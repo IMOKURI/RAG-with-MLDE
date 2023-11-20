@@ -27,11 +27,15 @@ def main():
         image_pretreined = Image.open("./images/pre-trained.drawio.png")
         image_rag = Image.open("./images/rag.drawio.png")
         image_architecture = Image.open("./images/architecture.drawio.png")
+        image_index_generation = Image.open("./images/index-generation.drawio.png")
+        image_retrieval_index = Image.open("./images/retrieval-document-summary-index.drawio.png")
 
         st.session_state["architectures"] = {
             "pre-trained": image_pretreined,
             "rag": image_rag,
             "architecture": image_architecture,
+            "index-generation": image_index_generation,
+            "retrieval-index": image_retrieval_index,
         }
 
     st.set_page_config(page_title="📝 検索補完生成デモ", layout="wide")
@@ -154,15 +158,26 @@ RAG (Retrieval Augmented Generation) とは、ユーザーからの質問に答�
     st.markdown(
         """
 このデモのアーキテクチャをご紹介します。
+"""
+    )
 
+    st.image(st.session_state["architectures"]["architecture"], caption="デモのアーキテクチャ")
+
+    st.markdown(
+        """
 #### Index 作成
 
 付加情報として利用したいデータセットを、MLDE (Machine Learning Developement Environment) の バッチ推論 で、
 Document Summary Index に登録します。
 
 Document Summary Index は、チャンクに分割した文章の要約を保持しているインデックスです。
+"""
+    )
 
+    st.image(st.session_state["architectures"]["index-generation"], caption="Index 作成")
 
+    st.markdown(
+        """
 #### ユーザーの質問に対する回答の生成
 
 ユーザーの質問にマッチする要約文を探します。
@@ -171,7 +186,7 @@ Document Summary Index は、チャンクに分割した文章の要約を保持
 """
     )
 
-    st.image(st.session_state["architectures"]["architecture"], caption="デモのアーキテクチャ")
+    st.image(st.session_state["architectures"]["retrieval-index"], caption="ユーザーの質問に対する回答の生成")
 
 
 def llm_query(text):
