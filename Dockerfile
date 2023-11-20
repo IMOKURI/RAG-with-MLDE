@@ -25,4 +25,6 @@ RUN python3 -m pip install --no-cache-dir --upgrade fschat[model_worker]
 # Streamlit
 RUN python3 -m pip install --no-cache-dir --upgrade streamlit
 
+COPY ./patch/inference.py /usr/local/lib/python3.10/dist-packages/fastchat/serve/inference.py
+
 WORKDIR /app
