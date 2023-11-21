@@ -188,6 +188,34 @@ Document Summary Index は、チャンクに分割した文章の要約を保持
 
     st.image(st.session_state["architectures"]["retrieval-index"], caption="ユーザーの質問に対する回答の生成")
 
+    st.markdown(
+        """
+---
+##### 参考: 検証機のスペック
+
+- HW: ProLiant DL380 Gen11
+- CPU: Intel(R) Xeon(R) Gold 6416H x2 (2P36C)
+- Memory: 256GB
+- GPU: NVIDIA H100 PCIe 80GB x1
+
+##### 参考: 検証機のリソース利用状況
+
+- CPU Memory: 約 5GB
+- GPU Memory: 約 16GB
+
+##### 利用しているLLM
+
+- [lmsys/vicuna-7b-v1.5](https://huggingface.co/lmsys/vicuna-7b-v1.5)
+
+##### 利用しているライブラリ
+
+- [HPE Machine Learning Developement Environment (Determined AI)](https://hpe-mlde.determined.ai/latest/)
+- [LlamaIndex](https://docs.llamaindex.ai/en/stable/)
+- [FastChat](https://github.com/lm-sys/FastChat)
+- [Streamlit](https://streamlit.io/)
+"""
+    )
+
 
 def llm_query(text):
     start = time.time()
