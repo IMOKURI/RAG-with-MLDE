@@ -201,7 +201,8 @@ Document Summary Index は、チャンクに分割した文章の要約を保持
 ##### 参考: 検証機のリソース利用状況
 
 - CPU Memory: 約 5GB
-- GPU Memory: 約 16GB
+- GPU Memory: 約 16GB (RAGシステム稼働時)
+- GPU Memory: 約 28GB (Index作成時)
 
 ##### 利用しているLLM
 

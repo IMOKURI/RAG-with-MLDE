@@ -16,7 +16,9 @@ class EmbeddingProcessor(experimental.TorchBatchProcessor):
         # 非同期処理の有効化
         nest_asyncio.apply()
 
-        self.document_summary_index = CustomDocumentSummaryIndex(openai_api_base="http://172.19.9.24:8000/v1")
+        self.document_summary_index = CustomDocumentSummaryIndex(
+            openai_api_base="http://172.19.9.24:8000/v1", streaming=False
+        )
 
         self.outputs = {}
         self.last_index = 0
