@@ -37,6 +37,22 @@ up-fastchat-model-worker: ## Start FastChat model worker.
 		--port 21000 \
 		--num-gpus 1
 
+up-fastchat-model-worker-13b: ## Start FastChat model worker. (13B)
+	docker run -d --rm --name fastchat-model-worker \
+		--gpus all --shm-size=32g \
+		--net rag-system \
+		-e FASTCHAT_WORKER_API_TIMEOUT=300 \
+		-v /home/hpe01/.cache:/root/.cache \
+		rag-system:latest \
+		python3 -m fastchat.serve.model_worker \
+		--model-names gpt-3.5-turbo,text-davinci-003,text-embedding-ada-002 \
+		--model-path lmsys/vicuna-13b-v1.5 \
+		--worker-address http://fastchat-model-worker:21000 \
+		--controller-address http://fastchat-controller:20000 \
+		--host 0.0.0.0 \
+		--port 21000 \
+		--num-gpus 1
+
 up-fastchat-api-server: ## Start FastChat API server.
 	docker run -d --rm --name fastchat-api-server -p 8000:8000 \
 		--net rag-system \
