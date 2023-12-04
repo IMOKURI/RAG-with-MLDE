@@ -41,6 +41,7 @@ def main():
     st.set_page_config(page_title="📝 検索補完生成デモ", layout="wide")
 
     st.title("📝 検索補完生成デモ")
+    st.error("このページは 2023年12月末 にてクローズさせて頂く予定です。")
     st.write(
         "\n\n"
         "このアプリケーションは、ユーザーの質問に対し、"
